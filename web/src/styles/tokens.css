@@ -1,0 +1,47 @@
+/* Astro Karma design tokens — see docs/DESIGN.md */
+:root {
+  /* Colors */
+  --page-bg: #ebe4d6;
+  --surface: #fbf7ef;
+  --surface-2: #f3ecdd;
+  --chart-fill: #fcfaf4;
+  --ink: #2c2820;
+  --sub-text: #978b73;
+  --faint: #b2a079;
+  --hairline: #e5dcc8;
+  --dashed-border: #d7c9ac;
+  --accent: #a8742b;
+  --accent-deep: #7a521c;
+  --accent-soft: #f1e6cf;
+  --on-accent: #fffbf3;
+  --planet-text: #9a6a28;
+  --chart-stroke: #c9a957;
+  --success: #3fb27f;
+  --warn: #c99a3f;
+  --danger: #b0492b;
+  --danger-border: #e2c0ae;
+
+  /* Typography */
+  --font-head: 'Spectral', Georgia, serif;
+  --font-body: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
+
+  /* Radius */
+  --r-pill: 20px;
+  --r-card: 14px;
+  --r-input: 9px;
+  --r-menu: 10px;
+
+  /* Shadows */
+  --sh-card: 0 2px 10px rgba(0, 0, 0, 0.08);
+  --sh-popover: 0 8px 22px rgba(0, 0, 0, 0.16);
+  --sh-drawer: 2px 0 18px rgba(0, 0, 0, 0.18);
+  --sh-toast: 0 8px 24px rgba(0, 0, 0, 0.18);
+  --sh-fab: 0 6px 18px rgba(0, 0, 0, 0.2);
+
+  /* Layout */
+  --sidebar-w: 236px;
+  --notes-w: 392px;
+  --chart-col-min: 452px;
+  --topbar-h: 58px;
+  --mobile-bp: 860px;
+}

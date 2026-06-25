@@ -5,7 +5,8 @@ Postgres, and (later) AI flashcard generation via Claude. See
 [../docs/SPEC.md](../docs/SPEC.md) §4–§8 for the data model, API surface, and ephemeris
 scope.
 
-> Status: **not scaffolded yet** (Phase 0). This README defines the intended structure.
+> Status: **scaffolded** (Phase 0 ✓). Bootable FastAPI app with CORS, settings, a
+> `/api/health` endpoint, and a Dockerfile. Routers/models/ephemeris land in later phases.
 
 ## Stack
 - Python 3.12 + FastAPI + Uvicorn

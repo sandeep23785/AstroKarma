@@ -4,7 +4,9 @@ Desktop-first responsive SPA + PWA. Recreates the prototype in `../design/refere
 faithfully. See [../docs/DESIGN.md](../docs/DESIGN.md) for tokens and per-screen specs and
 [../docs/CHART_GEOMETRY.md](../docs/CHART_GEOMETRY.md) for the chart SVG.
 
-> Status: **not scaffolded yet** (Phase 0). This README defines the intended structure.
+> Status: **scaffolded** (Phase 0 ✓). App shell (top bar + sidebar), routing for the four
+> screens, design tokens, and the astro/geometry constants are in place; screens are stubs
+> to be built out in Phase 1. `npm install && npm run dev` runs it.
 
 ## Stack
 - React 18 + Vite + TypeScript

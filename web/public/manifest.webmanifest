@@ -1,0 +1,11 @@
+{
+  "name": "Astro Karma",
+  "short_name": "Astro Karma",
+  "description": "Study Vedic astrology charts and keep learning notes.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#EBE4D6",
+  "theme_color": "#EBE4D6",
+  "icons": []
+}
