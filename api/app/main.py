@@ -1,9 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from . import models  # noqa: F401  (ensure models are registered before create_all)
 from .config import settings
+from .db import Base, engine
+from .routers import auth as auth_router
+from .routers import charts as charts_router
 
-app = FastAPI(title=settings.app_name, version="0.1.0")
+app = FastAPI(title=settings.app_name, version="0.2.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -13,11 +17,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Create tables on startup. (Production would use Alembic migrations.)
+Base.metadata.create_all(bind=engine)
+
+app.include_router(auth_router.router)
+app.include_router(charts_router.router)
+
 
 @app.get("/api/health")
 def health() -> dict[str, str]:
     return {"status": "ok", "service": settings.app_name, "environment": settings.environment}
-
-
-# Routers (charts, generate, auth, flashcards) are added in later phases —
-# see docs/SPEC.md §6 for the planned API surface.

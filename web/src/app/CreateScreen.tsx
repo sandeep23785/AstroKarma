@@ -87,15 +87,19 @@ export function CreateScreen() {
   const canSave = draft.name.trim() !== ''
   const placeHint = placeTool ? `placing ${PMETA[placeTool]} — click a house` : 'pick a planet to place'
 
-  const save = () => {
+  const save = async () => {
     if (!canSave) return
-    if (editing && id) {
-      updateChart(id, draft)
-      flash('Chart updated')
-      navigate(`/chart/${id}`)
-    } else {
-      const newId = addChart(draft)
-      navigate(`/chart/${newId}`)
+    try {
+      if (editing && id) {
+        await updateChart(id, draft)
+        flash('Chart updated')
+        navigate(`/chart/${id}`)
+      } else {
+        const newId = await addChart(draft)
+        navigate(`/chart/${newId}`)
+      }
+    } catch {
+      flash('Could not save — is the backend running?')
     }
   }
 

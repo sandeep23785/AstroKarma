@@ -28,20 +28,28 @@ export function ChartCard({ chart }: { chart: Chart }) {
 
   const open = () => navigate(`/chart/${chart.id}`)
 
-  const onDuplicate = (e: React.MouseEvent) => {
+  const onDuplicate = async (e: React.MouseEvent) => {
     e.stopPropagation()
-    const id = duplicateChart(chart.id)
     setMenuOpen(false)
-    flash('Chart duplicated')
-    if (id) navigate(`/chart/${id}`)
+    try {
+      const id = await duplicateChart(chart.id)
+      flash('Chart duplicated')
+      if (id) navigate(`/chart/${id}`)
+    } catch {
+      flash('Could not duplicate chart')
+    }
   }
 
-  const onDelete = (e: React.MouseEvent) => {
+  const onDelete = async (e: React.MouseEvent) => {
     e.stopPropagation()
     setMenuOpen(false)
     if (!window.confirm('Delete this chart? This cannot be undone.')) return
-    deleteChart(chart.id)
-    flash('Chart deleted')
+    try {
+      await deleteChart(chart.id)
+      flash('Chart deleted')
+    } catch {
+      flash('Could not delete chart')
+    }
   }
 
   return (

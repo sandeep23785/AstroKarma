@@ -74,16 +74,24 @@ export function ChartScreen() {
     }
   })
 
-  const onDuplicate = () => {
-    const newId = duplicateChart(chart.id)
-    flash('Chart duplicated')
-    if (newId) navigate(`/chart/${newId}`)
+  const onDuplicate = async () => {
+    try {
+      const newId = await duplicateChart(chart.id)
+      flash('Chart duplicated')
+      if (newId) navigate(`/chart/${newId}`)
+    } catch {
+      flash('Could not duplicate chart')
+    }
   }
-  const onDelete = () => {
+  const onDelete = async () => {
     if (!window.confirm('Delete this chart? This cannot be undone.')) return
-    const nextId = deleteChart(chart.id)
-    flash('Chart deleted')
-    navigate(nextId ? `/chart/${nextId}` : '/')
+    try {
+      const nextId = await deleteChart(chart.id)
+      flash('Chart deleted')
+      navigate(nextId ? `/chart/${nextId}` : '/')
+    } catch {
+      flash('Could not delete chart')
+    }
   }
 
   // Simulated speech-to-text (replace with Web Speech API in production).
@@ -351,9 +359,13 @@ export function ChartScreen() {
               {savedLabel}
             </span>
             <button
-              onClick={() => {
-                saveNote(chart.id)
-                flash('Saved to Google Drive · /Astro Karma/charts')
+              onClick={async () => {
+                try {
+                  await saveNote(chart.id)
+                  flash('Saved · /Astro Karma/charts')
+                } catch {
+                  flash('Could not save note')
+                }
               }}
               style={{
                 border: 'none',

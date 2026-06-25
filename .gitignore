@@ -17,6 +17,9 @@ venv/
 .mypy_cache/
 .ruff_cache/
 
+# Local SQLite database (dev)
+*.db
+
 # ---- Terraform (infra/) ----
 .terraform/
 *.tfstate

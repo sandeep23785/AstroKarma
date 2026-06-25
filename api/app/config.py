@@ -11,9 +11,12 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173"
 
     # Auth
+    owner_email: str = "owner@astrokarma.local"
     google_client_id: str = ""
     google_client_secret: str = ""
     jwt_secret: str = "dev-secret-change-me"
+    jwt_algorithm: str = "HS256"
+    jwt_expire_days: int = 30
 
     # AI (later phase)
     anthropic_api_key: str = ""
