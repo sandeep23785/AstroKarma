@@ -1,8 +1,15 @@
 import { useNavigate, useMatch } from 'react-router-dom'
+import { useCharts } from '../store/useCharts'
+import { useToast } from '../store/useToast'
+import { exportChartDoc } from '../lib/exportDoc'
 
 export function TopBar() {
   const navigate = useNavigate()
-  const onChart = !!useMatch('/chart/:id')
+  const match = useMatch('/chart/:id')
+  const chartId = match?.params.id
+  // Only the workspace (an existing chart) shows export — not /chart/new.
+  const chart = useCharts((s) => (chartId ? s.charts.find((c) => c.id === chartId) : undefined))
+  const flash = useToast((s) => s.flash)
 
   return (
     <header
@@ -54,9 +61,13 @@ export function TopBar() {
         Connected to Google Drive
       </div>
 
-      {onChart && (
+      {chart && (
         <button
           title="Export Word document"
+          onClick={async () => {
+            await exportChartDoc(chart)
+            flash('Word document exported (.doc)')
+          }}
           style={{
             border: '1px solid var(--hairline)',
             background: 'var(--surface-2)',

@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { TopBar } from './components/TopBar'
 import { Sidebar } from './components/Sidebar'
+import { Toast } from './components/Toast'
 import { HomeScreen } from './app/HomeScreen'
 import { CreateScreen } from './app/CreateScreen'
 import { ChartScreen } from './app/ChartScreen'
@@ -23,6 +24,7 @@ export function App() {
           </Routes>
         </main>
       </div>
+      <Toast />
     </div>
   )
 }

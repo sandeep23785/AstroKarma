@@ -1,4 +1,6 @@
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useCharts } from '../store/useCharts'
+import { SIGNS } from '../lib/astro'
 
 const labelStyle: React.CSSProperties = {
   fontSize: 10.5,
@@ -26,7 +28,10 @@ function navItemStyle(active: boolean): React.CSSProperties {
 
 export function Sidebar() {
   const { pathname } = useLocation()
-  // "Charts" is active on home, create, and chart workspace screens.
+  const { id: activeRouteId } = useParams()
+  const navigate = useNavigate()
+  const charts = useCharts((s) => s.charts)
+
   const chartsActive = pathname === '/' || pathname.startsWith('/chart')
   const libraryActive = pathname.startsWith('/library')
 
@@ -55,7 +60,27 @@ export function Sidebar() {
 
       <div style={labelStyle}>RECENT CHARTS</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 3, overflow: 'auto' }}>
-        {/* Populated from the chart library in Phase 1. */}
+        {charts.map((c) => {
+          const isActive = c.id === activeRouteId
+          return (
+            <div
+              key={c.id}
+              onClick={() => navigate(`/chart/${c.id}`)}
+              style={{
+                padding: '9px 11px',
+                borderRadius: 9,
+                cursor: 'pointer',
+                border: `1px solid ${isActive ? 'var(--hairline)' : 'transparent'}`,
+                background: isActive ? 'var(--surface-2)' : 'transparent',
+              }}
+            >
+              <div style={{ fontWeight: 600, fontSize: 13.5 }}>{c.name}</div>
+              <div style={{ fontSize: 11.5, color: 'var(--sub-text)', marginTop: 2 }}>
+                {c.date} · {SIGNS[c.ascSign - 1]} Lagna
+              </div>
+            </div>
+          )
+        })}
       </div>
       <div style={{ flex: 1 }} />
     </aside>
