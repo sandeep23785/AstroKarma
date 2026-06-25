@@ -6,6 +6,7 @@ from .config import settings
 from .db import Base, engine
 from .routers import auth as auth_router
 from .routers import charts as charts_router
+from .routers import generate as generate_router
 
 app = FastAPI(title=settings.app_name, version="0.2.0")
 
@@ -22,6 +23,7 @@ Base.metadata.create_all(bind=engine)
 
 app.include_router(auth_router.router)
 app.include_router(charts_router.router)
+app.include_router(generate_router.router)
 
 
 @app.get("/api/health")

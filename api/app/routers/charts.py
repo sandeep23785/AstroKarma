@@ -3,10 +3,11 @@ from datetime import timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from ..astro import vargas
 from ..auth import get_current_user
 from ..deps import get_db
 from ..models import Chart, Note, User
-from ..schemas import ChartOut, DraftIn, NoteIn
+from ..schemas import ChartOut, DraftIn, NoteIn, VargaOut
 
 router = APIRouter(prefix="/api/charts", tags=["charts"])
 
@@ -27,6 +28,7 @@ def serialize(c: Chart) -> dict:
         "houses": c.houses or [],
         "notes": {"whole": c.note.body if c.note else ""},
         "savedAt": _to_ms(c.note.saved_at if c.note else None),
+        "positions": c.positions,
     }
 
 
@@ -58,6 +60,7 @@ def create_chart(d: DraftIn, user: User = Depends(get_current_user), db: Session
         asc_sign=d.ascSign,
         houses=d.houses,
         computed=d.computed,
+        positions=d.positions,
     )
     chart.note = Note(body="")
     db.add(chart)
@@ -71,6 +74,25 @@ def get_chart(chart_id: str, user: User = Depends(get_current_user), db: Session
     return serialize(_owned(db, user, chart_id))
 
 
+@router.get("/{chart_id}/varga/{key}", response_model=VargaOut)
+def get_varga(
+    chart_id: str,
+    key: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Compute a divisional chart from the stored ephemeris longitudes.
+
+    Falls back to the stored D1 placement for manually-placed charts (no positions)
+    or unsupported varga keys.
+    """
+    chart = _owned(db, user, chart_id)
+    pos = chart.positions
+    if not pos or not vargas.supported(key):
+        return {"ascSign": chart.asc_sign, "houses": chart.houses or []}
+    return vargas.build_varga(pos["ascLon"], pos["bodies"], key)
+
+
 @router.put("/{chart_id}", response_model=ChartOut)
 def update_chart(
     chart_id: str, d: DraftIn, user: User = Depends(get_current_user), db: Session = Depends(get_db)
@@ -82,6 +104,7 @@ def update_chart(
     chart.asc_sign = d.ascSign
     chart.houses = d.houses
     chart.computed = d.computed
+    chart.positions = d.positions
     db.commit()
     db.refresh(chart)
     return serialize(chart)

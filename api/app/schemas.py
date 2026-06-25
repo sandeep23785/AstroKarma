@@ -14,6 +14,7 @@ class ChartOut(BaseModel):
     houses: list[list[str]]
     notes: NoteOut
     savedAt: int | None
+    positions: dict | None = None
 
 
 class DraftIn(BaseModel):
@@ -23,6 +24,31 @@ class DraftIn(BaseModel):
     ascSign: int = 1
     houses: list[list[str]] = Field(default_factory=list)
     computed: bool = False
+    positions: dict | None = None
+
+
+class GenerateIn(BaseModel):
+    date: str
+    time: str = "12:00"
+    place: str = ""
+    lat: float | None = None
+    lon: float | None = None
+    tz: str = "Asia/Kolkata"
+
+
+class GenerateOut(BaseModel):
+    ascSign: int
+    houses: list[list[str]]
+    positions: dict
+    lat: float
+    lon: float
+    tz: str
+    place: str
+
+
+class VargaOut(BaseModel):
+    ascSign: int
+    houses: list[list[str]]
 
 
 class NoteIn(BaseModel):

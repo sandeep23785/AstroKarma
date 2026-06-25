@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Chart } from '../types'
+import type { Chart, ChartPositions } from '../types'
 import type { PlanetCode } from '../lib/astro'
 import { api } from '../lib/api'
 
@@ -12,6 +12,7 @@ export interface Draft {
   ascSign: number
   houses: PlanetCode[][]
   computed: boolean
+  positions?: ChartPositions | null
 }
 
 interface ChartsState {

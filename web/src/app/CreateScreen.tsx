@@ -4,6 +4,23 @@ import { useCharts, emptyHouses, type Draft } from '../store/useCharts'
 import { useToast } from '../store/useToast'
 import { SIGNS, PMETA, PORDER, type PlanetCode } from '../lib/astro'
 import { NorthIndianChart } from '../components/NorthIndianChart'
+import { api } from '../lib/api'
+import type { ChartPositions } from '../types'
+
+interface GenerateResult {
+  ascSign: number
+  houses: PlanetCode[][]
+  positions: ChartPositions
+}
+
+// Split the "TIME & PLACE" field (e.g. "04:32 · Pune, IN") into its parts.
+function splitTimePlace(value: string): { time: string; place: string } {
+  const parts = value.split('·')
+  if (parts.length >= 2) {
+    return { time: parts[0].trim(), place: parts.slice(1).join('·').trim() }
+  }
+  return { time: '', place: value.trim() }
+}
 
 const inputStyle: React.CSSProperties = {
   fontSize: 14,
@@ -21,17 +38,6 @@ const fieldLabelStyle: React.CSSProperties = {
   fontSize: 12,
   fontWeight: 600,
   color: 'var(--sub-text)',
-}
-
-// Deterministic mock used to "generate" a chart from birth details.
-// Production replaces this with POST /api/generate (real ephemeris).
-function hash(str: string): number {
-  let h = 2166136261
-  for (let i = 0; i < str.length; i++) {
-    h ^= str.charCodeAt(i)
-    h = Math.imul(h, 16777619)
-  }
-  return Math.abs(h)
 }
 
 export function CreateScreen() {
@@ -53,33 +59,60 @@ export function CreateScreen() {
           ascSign: c.ascSign,
           houses: c.houses.map((a) => a.slice()),
           computed: false,
+          positions: c.positions ?? null,
         }
     }
-    return { name: '', date: '', place: '', ascSign: 1, houses: emptyHouses(), computed: false }
+    return {
+      name: '',
+      date: '',
+      place: '',
+      ascSign: 1,
+      houses: emptyHouses(),
+      computed: false,
+      positions: null,
+    }
   })
   const [placeTool, setPlaceTool] = useState<PlanetCode | null>(null)
+  const [generating, setGenerating] = useState(false)
 
   const patch = (p: Partial<Draft>) => setDraft((d) => ({ ...d, ...p }))
 
-  const computeChart = () => {
-    const seed = hash((draft.name || 'seed') + '|' + (draft.date || '') + '|' + (draft.place || ''))
-    const asc = (seed % 12) + 1
-    const houses: PlanetCode[][] = emptyHouses()
-    PORDER.forEach((p, idx) => {
-      const h = (Math.floor(seed / (idx + 1)) + idx * idx * 7 + idx * 5) % 12
-      houses[h].push(p)
-    })
-    patch({ ascSign: asc, houses, computed: true })
-    flash('Chart computed from birth details (API preview)')
+  const computeChart = async () => {
+    if (!draft.date.trim()) {
+      flash('Enter a date of birth to generate')
+      return
+    }
+    const { time, place } = splitTimePlace(draft.place)
+    if (!place) {
+      flash('Enter a birth place (in "Time & place") to generate')
+      return
+    }
+    setGenerating(true)
+    try {
+      const res = await api.post<GenerateResult>('/api/generate', {
+        date: draft.date,
+        time,
+        place,
+        tz: 'Asia/Kolkata',
+      })
+      patch({ ascSign: res.ascSign, houses: res.houses, computed: true, positions: res.positions })
+      flash('Computed via Swiss Ephemeris (Lahiri)')
+    } catch (e) {
+      flash((e as Error).message)
+    } finally {
+      setGenerating(false)
+    }
   }
 
+  // Manual placement invalidates the ephemeris longitudes, so clear positions
+  // (D9+ will then fall back to the manually-placed D1 chart).
   const placeAt = (i: number) => {
     if (!placeTool) return
     setDraft((d) => {
       const wasThere = d.houses[i].includes(placeTool)
       const houses = d.houses.map((a) => a.filter((p) => p !== placeTool))
       if (!wasThere) houses[i] = [...houses[i], placeTool]
-      return { ...d, houses }
+      return { ...d, houses, positions: null }
     })
   }
 
@@ -190,6 +223,7 @@ export function CreateScreen() {
             </div>
             <button
               onClick={computeChart}
+              disabled={generating}
               style={{
                 border: 'none',
                 background: 'var(--accent)',
@@ -198,11 +232,12 @@ export function CreateScreen() {
                 fontWeight: 600,
                 padding: '9px 15px',
                 borderRadius: 9,
-                cursor: 'pointer',
+                cursor: generating ? 'wait' : 'pointer',
                 whiteSpace: 'nowrap',
+                opacity: generating ? 0.7 : 1,
               }}
             >
-              ✨ Generate
+              {generating ? '… Generating' : '✨ Generate'}
             </button>
           </div>
           {draft.computed && (

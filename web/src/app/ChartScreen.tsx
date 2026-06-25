@@ -4,6 +4,12 @@ import { useCharts, relativeTime } from '../store/useCharts'
 import { useToast } from '../store/useToast'
 import { SIGNS, PMETA, PORDER, signOf } from '../lib/astro'
 import { NorthIndianChart } from '../components/NorthIndianChart'
+import { api } from '../lib/api'
+
+interface VargaView {
+  ascSign: number
+  houses: string[][]
+}
 
 // D1 + D9 are in scope now; the rest are shown disabled until their varga math lands.
 const VARGAS: Array<{ key: string; label: string; enabled: boolean }> = [
@@ -35,6 +41,7 @@ export function ChartScreen() {
   const flash = useToast((s) => s.flash)
 
   const [varga, setVarga] = useState('D1')
+  const [vargaView, setVargaView] = useState<VargaView>({ ascSign: 1, houses: [] })
   const [notesOpen, setNotesOpen] = useState(true)
   const [dictating, setDictating] = useState(false)
   const dictateTimer = useRef<ReturnType<typeof setInterval> | undefined>(undefined)
@@ -50,6 +57,25 @@ export function ChartScreen() {
     return stopDictate
   }, [id])
 
+  // Load the selected divisional chart. D1 comes straight from the chart; D9+ is
+  // computed by the backend from the stored ephemeris longitudes.
+  useEffect(() => {
+    if (!chart) return
+    if (varga === 'D1') {
+      setVargaView({ ascSign: chart.ascSign, houses: chart.houses })
+      return
+    }
+    let cancelled = false
+    api
+      .get<VargaView>(`/api/charts/${chart.id}/varga/${varga}`)
+      .then((d) => !cancelled && setVargaView(d))
+      .catch(() => !cancelled && setVargaView({ ascSign: chart.ascSign, houses: chart.houses }))
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [varga, chart?.id, chart?.houses, chart?.ascSign])
+
   if (!chart) {
     return (
       <div style={{ padding: '22px 26px' }}>
@@ -61,14 +87,16 @@ export function ChartScreen() {
   const planetCount = chart.houses.reduce((a, h) => a + h.length, 0)
   const vargaLabel = VARGAS.find((v) => v.key === varga)?.label ?? 'D1 · Rāśi'
 
+  // Legend reflects the currently displayed varga.
+  const view: VargaView = vargaView.houses.length ? vargaView : { ascSign: chart.ascSign, houses: chart.houses }
   const legend: Array<{ code: string; name: string; pos: string }> = []
   PORDER.forEach((code) => {
     for (let i = 0; i < 12; i++) {
-      if (chart.houses[i].includes(code)) {
+      if (view.houses[i]?.includes(code)) {
         legend.push({
           code,
           name: PMETA[code],
-          pos: `${SIGNS[signOf(i, chart.ascSign) - 1]} · House ${i + 1}`,
+          pos: `${SIGNS[signOf(i, view.ascSign) - 1]} · House ${i + 1}`,
         })
       }
     }
@@ -217,8 +245,7 @@ export function ChartScreen() {
             </span>
           </div>
           <div style={{ aspectRatio: '1 / 1', width: '100%' }}>
-            {/* D9+ render the D1 chart until backend varga computation lands (Phase 3). */}
-            <NorthIndianChart houses={chart.houses} ascSign={chart.ascSign} />
+            <NorthIndianChart houses={view.houses} ascSign={view.ascSign} />
           </div>
         </div>
 
