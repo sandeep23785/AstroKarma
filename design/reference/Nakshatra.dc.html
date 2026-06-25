@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<template id="__bundler_thumbnail" data-bg-color="#EBE4D6">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="800" fill="#EBE4D6"></rect>
+    <circle cx="600" cy="400" r="190" fill="none" stroke="#A8742B" stroke-width="10" opacity="0.4"></circle>
+    <path d="M600 150 L645 360 L855 405 L645 450 L600 660 L555 450 L345 405 L555 360 Z" fill="#A8742B"></path>
+  </svg>
+</template>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;1,400&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+@keyframes nk-pulse { 0%{transform:scale(1);opacity:.5} 70%{transform:scale(2.2);opacity:0} 100%{opacity:0} }
+@keyframes nk-toast { 0%{transform:translate(-50%,12px);opacity:0} 12%{transform:translate(-50%,0);opacity:1} 88%{transform:translate(-50%,0);opacity:1} 100%{transform:translate(-50%,8px);opacity:0} }
+</style>
+</helmet>
+<div style="width:100%;height:100vh;display:flex;flex-direction:column;overflow:hidden;background:#EBE4D6;color:#2C2820;font-family:'Hanken Grotesk',system-ui,sans-serif;font-size:14px">
+
+  <div style="height:58px;flex:none;display:flex;align-items:center;gap:12px;padding:0 16px 0 14px;background:#FBF7EF;border-bottom:1px solid #E5DCC8">
+    <button onClick="{{ toggleSidebar }}" title="Menu" style="width:34px;height:34px;flex:none;border:1px solid #E5DCC8;background:#F3ECDD;border-radius:9px;cursor:pointer;font-size:15px;color:#7A521C">☰</button>
+    <div style="display:flex;align-items:center;gap:10px">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style="display:block">
+        <circle cx="12" cy="12" r="10.5" stroke="#A8742B" stroke-width="1.1" opacity="0.45"></circle>
+        <path d="M12 2.4 L13.7 10.3 L21.6 12 L13.7 13.7 L12 21.6 L10.3 13.7 L2.4 12 L10.3 10.3 Z" fill="#A8742B"></path>
+      </svg>
+      <span style="font-family:'Spectral',serif;font-size:18px;font-weight:600;letter-spacing:.3px">Astro Karma</span>
+    </div>
+    <div style="flex:1"></div>
+    <sc-if value="{{ showDrive }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;align-items:center;gap:7px;font-size:12.5px;color:#978B73"><span style="width:7px;height:7px;border-radius:50%;background:#3FB27F"></span>Connected to Google Drive</div>
+    </sc-if>
+    <sc-if value="{{ isChart }}" hint-placeholder-val="">
+      <button onClick="{{ exportDoc }}" title="Export Word document" style="border:1px solid #E5DCC8;background:#F3ECDD;color:#7A521C;font-family:inherit;font-size:13px;font-weight:600;padding:8px 13px;border-radius:9px;cursor:pointer">{{ exportLabel }}</button>
+    </sc-if>
+    <button onClick="{{ startNew }}" style="border:none;background:#A8742B;color:#FFFBF3;font-family:inherit;font-size:13px;font-weight:600;padding:8px 14px;border-radius:9px;cursor:pointer">{{ newLabel }}</button>
+  </div>
+
+  <div style="flex:1;min-height:0;display:flex;position:relative">
+
+    <sc-if value="{{ sidebarBackdrop }}" hint-placeholder-val="">
+      <div onClick="{{ toggleSidebar }}" style="position:absolute;inset:0;background:rgba(20,16,10,.32);z-index:25"></div>
+    </sc-if>
+
+    <sc-if value="{{ sidebarOpen }}" hint-placeholder-val="{{ true }}">
+    <div style="{{ sidebarStyle }}">
+      <div style="font-size:10.5px;font-weight:700;letter-spacing:1.3px;color:#978B73;padding:0 8px 8px">WORKSPACE</div>
+      <button onClick="{{ goHome }}" style="{{ navHome }}">◈ Charts</button>
+      <button onClick="{{ goLibrary }}" style="{{ navLib }}">▤ Learning library</button>
+      <div style="display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:9px;color:#978B73;font-size:13.5px;cursor:default">✦ Glossary</div>
+      <div style="height:1px;background:#E5DCC8;margin:14px 6px"></div>
+      <div style="font-size:10.5px;font-weight:700;letter-spacing:1.3px;color:#978B73;padding:0 8px 8px">RECENT CHARTS</div>
+      <div style="display:flex;flex-direction:column;gap:3px;overflow:auto">
+        <sc-for list="{{ recentCharts }}" as="c" hint-placeholder-count="3">
+          <div onClick="{{ c.open }}" style="{{ c.style }}">
+            <div style="font-weight:600;font-size:13.5px">{{ c.name }}</div>
+            <div style="font-size:11.5px;color:#978B73;margin-top:2px">{{ c.sub }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="flex:1"></div>
+    </div>
+    </sc-if>
+
+    <!-- ===================== HOME ===================== -->
+    <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+    <div style="flex:1;min-width:0;overflow:auto;padding:28px 30px">
+      <div style="max-width:880px">
+        <h1 style="margin:0 0 14px;font-family:'Spectral',serif;font-size:28px;font-weight:600">Charts</h1>
+        <div style="margin:0 0 20px;max-width:380px;position:relative">
+          <span style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#B2A079;font-size:15px;pointer-events:none">⌕</span>
+          <input value="{{ query }}" onChange="{{ onQuery }}" placeholder="Search by name, Lagna, or place…" style="width:100%;font-family:inherit;font-size:13.5px;padding:10px 12px 10px 34px;border:1px solid #E5DCC8;border-radius:10px;background:#FBF7EF;color:#2C2820;box-sizing:border-box;outline:none"/>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:14px">
+          <div onClick="{{ startNew }}" style="border:1px dashed #D7C9AC;border-radius:14px;padding:22px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;cursor:pointer;background:#FBF7EF66;min-height:128px;justify-content:center">
+            <div style="width:34px;height:34px;border-radius:9px;background:#F1E6CF;color:#7A521C;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:600">＋</div>
+            <div style="font-family:'Spectral',serif;font-size:17px;font-weight:600">Add chart</div>
+            <div style="font-size:12.5px;color:#978B73">Generate or place planets</div>
+          </div>
+          <sc-for list="{{ galleryCharts }}" as="c" hint-placeholder-count="3">
+            <div onClick="{{ c.open }}" style="position:relative;border:1px solid #E5DCC8;border-radius:14px;padding:18px;cursor:pointer;background:#FBF7EF;display:flex;flex-direction:column;gap:10px;min-height:128px">
+              <button onClick="{{ c.toggleMenu }}" title="Chart actions" style="position:absolute;top:10px;right:10px;width:28px;height:28px;border:1px solid #E5DCC8;background:#FCFAF4;border-radius:8px;cursor:pointer;color:#978B73;font-size:16px;line-height:1;z-index:5">⋯</button>
+              <sc-if value="{{ c.menuOpen }}" hint-placeholder-val="">
+                <div style="position:absolute;top:42px;right:10px;z-index:12;background:#FBF7EF;border:1px solid #E5DCC8;border-radius:10px;box-shadow:0 8px 22px rgba(0,0,0,.16);padding:5px;min-width:150px;display:flex;flex-direction:column">
+                  <button onClick="{{ c.open }}" style="text-align:left;border:none;background:transparent;font-family:inherit;font-size:13px;padding:8px 10px;border-radius:7px;cursor:pointer;color:#2C2820">Open</button>
+                  <button onClick="{{ c.edit }}" style="text-align:left;border:none;background:transparent;font-family:inherit;font-size:13px;padding:8px 10px;border-radius:7px;cursor:pointer;color:#2C2820">Edit chart</button>
+                  <button onClick="{{ c.duplicate }}" style="text-align:left;border:none;background:transparent;font-family:inherit;font-size:13px;padding:8px 10px;border-radius:7px;cursor:pointer;color:#2C2820">Duplicate</button>
+                  <button onClick="{{ c.del }}" style="text-align:left;border:none;background:transparent;font-family:inherit;font-size:13px;padding:8px 10px;border-radius:7px;cursor:pointer;color:#B0492B">Delete</button>
+                </div>
+              </sc-if>
+              <div style="display:flex;align-items:center;gap:11px">
+                <div style="width:40px;height:40px;border-radius:11px;background:#F1E6CF;color:#7A521C;display:flex;align-items:center;justify-content:center;font-family:'Spectral',serif;font-size:18px;font-weight:600">{{ c.initial }}</div>
+                <div style="min-width:0">
+                  <div style="font-weight:600;font-size:15px;font-family:'Spectral',serif">{{ c.name }}</div>
+                  <div style="font-size:12px;color:#978B73">{{ c.sub }}</div>
+                </div>
+              </div>
+              <div style="flex:1"></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#978B73">
+                <span style="padding:3px 9px;border-radius:14px;background:#F3ECDD;border:1px solid #E5DCC8">{{ c.ascName }} Lagna</span>
+                <span>{{ c.planetCount }} placed</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ===================== CREATE ===================== -->
+    <sc-if value="{{ isCreate }}" hint-placeholder-val="">
+    <div style="flex:1;min-width:0;overflow:auto;padding:24px 26px">
+      <div style="max-width:980px">
+        <button onClick="{{ goHome }}" style="border:none;background:transparent;color:#978B73;font-family:inherit;font-size:13px;cursor:pointer;padding:0;margin-bottom:6px">← Charts</button>
+        <h1 style="margin:0 0 18px;font-family:'Spectral',serif;font-size:26px;font-weight:600">{{ createTitle }}</h1>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:18px;max-width:620px">
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:#978B73">NAME
+            <input value="{{ draftName }}" onChange="{{ onName }}" placeholder="e.g. Aarav Sharma" style="font-family:inherit;font-size:14px;padding:10px 12px;border:1px solid #E5DCC8;border-radius:9px;background:#FBF7EF;color:#2C2820"/>
+          </label>
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:#978B73">LAGNA (ASCENDANT SIGN)
+            <select value="{{ draftAsc }}" onChange="{{ onAsc }}" style="font-family:inherit;font-size:14px;padding:10px 12px;border:1px solid #E5DCC8;border-radius:9px;background:#FBF7EF;color:#2C2820">
+              <sc-for list="{{ signOptions }}" as="s" hint-placeholder-count="12">
+                <option value="{{ s.value }}">{{ s.name }}</option>
+              </sc-for>
+            </select>
+          </label>
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:#978B73">DATE OF BIRTH
+            <input value="{{ draftDate }}" onChange="{{ onDate }}" placeholder="14 Aug 1991" style="font-family:inherit;font-size:14px;padding:10px 12px;border:1px solid #E5DCC8;border-radius:9px;background:#FBF7EF;color:#2C2820"/>
+          </label>
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;color:#978B73">TIME &amp; PLACE
+            <input value="{{ draftPlace }}" onChange="{{ onPlace }}" placeholder="04:32 · Pune, IN" style="font-family:inherit;font-size:14px;padding:10px 12px;border:1px solid #E5DCC8;border-radius:9px;background:#FBF7EF;color:#2C2820"/>
+          </label>
+        </div>
+
+        <div style="margin-bottom:16px;padding:14px 16px;border:1px solid #E5DCC8;border-radius:12px;background:#FBF7EF;max-width:620px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <div>
+              <div style="font-weight:600;font-size:13.5px">Generate automatically</div>
+              <div style="font-size:12px;color:#978B73;margin-top:1px">Compute planet positions from birth details via ephemeris API.</div>
+            </div>
+            <button onClick="{{ computeChart }}" style="border:none;background:#A8742B;color:#FFFBF3;font-family:inherit;font-size:13px;font-weight:600;padding:9px 15px;border-radius:9px;cursor:pointer;white-space:nowrap">✨ Generate</button>
+          </div>
+          <sc-if value="{{ draftComputed }}" hint-placeholder-val="">
+            <div style="margin-top:11px;font-size:11.5px;color:#7A521C;background:#F1E6CF;border:1px solid #E5DCC8;padding:6px 10px;border-radius:7px;display:inline-block">✓ Computed via ephemeris (preview) — fine-tune manually below</div>
+          </sc-if>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,452px));gap:24px;align-items:start">
+          <div style="background:#FCFAF4;border:1px solid #E5DCC8;border-radius:14px;padding:18px">
+            <div style="font-size:12.5px;font-weight:600;color:#978B73;margin-bottom:10px">North Indian · D1 — {{ placeHint }}</div>
+            <div style="aspect-ratio:1/1;width:100%">{{ chartCreate }}</div>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:700;letter-spacing:.8px;color:#978B73;margin-bottom:9px">OR PLACE MANUALLY — PICK A PLANET, CLICK A HOUSE</div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px">
+              <sc-for list="{{ palette }}" as="p" hint-placeholder-count="9">
+                <button onClick="{{ p.arm }}" style="{{ p.style }}">{{ p.code }}<span style="font-weight:500;opacity:.8"> {{ p.name }}</span></button>
+              </sc-for>
+            </div>
+            <div style="font-size:12px;color:#978B73;line-height:1.55;margin-bottom:20px">Click an armed planet onto a house to place it. Click its house again to remove. Each planet sits in one house.</div>
+            <button onClick="{{ saveDraft }}" style="{{ saveDraftStyle }}">{{ saveLabel }}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ===================== CHART WORKSPACE ===================== -->
+    <sc-if value="{{ isChart }}" hint-placeholder-val="">
+    <div style="{{ chartRowStyle }}">
+      <div style="{{ chartColStyle }}">
+        <div style="display:flex;align-items:flex-start;gap:16px">
+          <div style="flex:1;min-width:0">
+            <h1 style="margin:0;font-family:'Spectral',serif;font-size:27px;font-weight:600;letter-spacing:.2px">{{ activeName }}</h1>
+            <div style="margin-top:5px;font-size:13px;color:#978B73">{{ activeMeta }}</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+            <span style="font-size:12px;padding:6px 11px;border-radius:20px;background:#FBF7EF;border:1px solid #E5DCC8">Lagna · <b>{{ lagnaName }}</b></span>
+            <span style="font-size:12px;padding:6px 11px;border-radius:20px;background:#FBF7EF;border:1px solid #E5DCC8">{{ planetCountLabel }}</span>
+            <button onClick="{{ editActive }}" style="font-family:inherit;font-size:12px;font-weight:600;padding:6px 12px;border-radius:20px;background:#FBF7EF;border:1px solid #E5DCC8;color:#7A521C;cursor:pointer">✎ Edit</button>
+            <button onClick="{{ duplicateActive }}" style="font-family:inherit;font-size:12px;font-weight:600;padding:6px 12px;border-radius:20px;background:#FBF7EF;border:1px solid #E5DCC8;color:#7A521C;cursor:pointer">⧉ Duplicate</button>
+            <button onClick="{{ deleteActive }}" style="font-family:inherit;font-size:12px;font-weight:600;padding:6px 12px;border-radius:20px;background:#FBF7EF;border:1px solid #E2C0AE;color:#B0492B;cursor:pointer">🗑 Delete</button>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:7px;margin:18px 0 16px;flex-wrap:wrap">
+          <sc-for list="{{ vargaTabs }}" as="v" hint-placeholder-count="7">
+            <button onClick="{{ v.select }}" style="{{ v.style }}">{{ v.label }}</button>
+          </sc-for>
+        </div>
+
+        <div style="align-self:center;width:100%;max-width:452px;background:#FCFAF4;border:1px solid #E5DCC8;border-radius:14px;padding:18px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <span style="font-size:12.5px;font-weight:600;color:#978B73">North Indian · {{ vargaLabel }}</span>
+          </div>
+          <div style="aspect-ratio:1/1;width:100%">{{ chartWorkspace }}</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:18px">
+          <sc-for list="{{ legend }}" as="l" hint-placeholder-count="6">
+            <div style="padding:10px 12px;border-radius:10px;background:#FBF7EF;border:1px solid #E5DCC8"><b style="color:#9A6A28">{{ l.code }}</b> <span style="font-size:12.5px">{{ l.name }}</span><div style="font-size:11.5px;color:#978B73;margin-top:2px">{{ l.pos }}</div></div>
+          </sc-for>
+        </div>
+      </div>
+
+      <sc-if value="{{ notesBackdrop }}" hint-placeholder-val="">
+        <div onClick="{{ toggleNotes }}" style="position:absolute;inset:0;background:rgba(20,16,10,.32);z-index:25"></div>
+      </sc-if>
+
+      <sc-if value="{{ notesOpen }}" hint-placeholder-val="{{ true }}">
+      <div style="{{ notesPanelStyle }}">
+        <div style="padding:16px 18px 14px;border-bottom:1px solid #E5DCC8">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <div style="display:flex;align-items:center;gap:8px">
+              <button onClick="{{ toggleNotes }}" title="Collapse notes" style="width:28px;height:28px;border:1px solid #E5DCC8;background:#F3ECDD;border-radius:8px;cursor:pointer;color:#7A521C;font-size:13px">›</button>
+              <h2 style="margin:0;font-family:'Spectral',serif;font-size:19px;font-weight:600">Notes</h2>
+            </div>
+            <div style="position:relative;display:flex;align-items:center">
+              <span style="{{ pulseStyle }}"></span>
+              <button onClick="{{ toggleDictate }}" style="{{ dictateStyle }}"><span style="font-size:15px">🎙</span>{{ dictateLabel }}</button>
+            </div>
+          </div>
+        </div>
+        <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:14px 18px">
+          <textarea value="{{ noteText }}" onChange="{{ onNoteChange }}" placeholder="{{ notePlaceholder }}" style="flex:1;resize:none;border:none;outline:none;background:transparent;font-family:'Hanken Grotesk',sans-serif;font-size:13.8px;line-height:1.62;color:#2C2820"></textarea>
+          <div style="font-size:12px;color:#978B73;font-style:italic;min-height:18px">{{ dictatePreview }}</div>
+        </div>
+        <div style="border-top:1px solid #E5DCC8;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <span style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:#978B73"><span style="width:6px;height:6px;border-radius:50%;background:{{ savedDot }}"></span>{{ savedLabel }}</span>
+          <button onClick="{{ saveToDrive }}" style="border:none;background:#A8742B;color:#FFFBF3;font-family:inherit;font-size:12.5px;font-weight:600;padding:8px 15px;border-radius:8px;cursor:pointer">Save to Drive</button>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ notesRail }}" hint-placeholder-val="">
+        <div style="width:46px;flex:none;border-left:1px solid #E5DCC8;background:#FBF7EF;display:flex;justify-content:center;padding-top:16px">
+          <button onClick="{{ toggleNotes }}" title="Open notes" style="border:1px solid #E5DCC8;background:#F3ECDD;color:#7A521C;font-family:inherit;font-size:12.5px;font-weight:600;padding:10px 7px;border-radius:8px;cursor:pointer;writing-mode:vertical-rl">‹ Notes</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ notesFab }}" hint-placeholder-val="">
+        <button onClick="{{ toggleNotes }}" style="position:absolute;right:16px;bottom:18px;z-index:20;border:none;background:#A8742B;color:#FFFBF3;font-family:inherit;font-size:13px;font-weight:600;padding:12px 18px;border-radius:24px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.2)">🖉 Notes</button>
+      </sc-if>
+    </div>
+    </sc-if>
+
+    <!-- ===================== LIBRARY ===================== -->
+    <sc-if value="{{ isLibrary }}" hint-placeholder-val="">
+    <div style="flex:1;min-width:0;overflow:auto;padding:28px 30px">
+      <div style="max-width:860px">
+        <h1 style="margin:0;font-family:'Spectral',serif;font-size:28px;font-weight:600">Learning library</h1>
+        <p style="margin:6px 0 22px;font-size:13.5px;color:#978B73">Findings you've saved across charts, grouped by what you were studying.</p>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <sc-for list="{{ libraryCards }}" as="c" hint-placeholder-count="4">
+            <div style="border:1px solid #E5DCC8;border-radius:14px;background:#FBF7EF;padding:18px 20px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                <h3 style="margin:0;font-family:'Spectral',serif;font-size:17px;font-weight:600">{{ c.title }}</h3>
+                <span style="font-size:11.5px;color:#978B73;padding:4px 10px;border-radius:14px;background:#F3ECDD;border:1px solid #E5DCC8">{{ c.count }}</span>
+              </div>
+              <p style="margin:0 0 10px;font-size:13.5px;line-height:1.6;color:#2C2820">{{ c.body }}</p>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <sc-for list="{{ c.tags }}" as="t" hint-placeholder-count="3">
+                  <span style="font-size:11.5px;padding:4px 9px;border-radius:6px;background:#F3ECDD;border:1px solid #E5DCC8;color:#978B73">{{ t }}</span>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+  </div>
+
+  <sc-if value="{{ toast }}" hint-placeholder-val="">
+    <div style="position:fixed;left:50%;bottom:26px;background:#2C2820;color:#FBF7EF;font-size:13px;font-weight:500;padding:11px 18px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.18);display:flex;align-items:center;gap:9px;animation:nk-toast 2.2s ease forwards;z-index:50">
+      <span style="width:7px;height:7px;border-radius:50%;background:#3FB27F"></span>{{ toast }}
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:820}}">
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+    this.SIGNS = SIGNS;
+    this.PMETA = {Su:'Sun',Mo:'Moon',Ma:'Mars',Me:'Mercury',Ju:'Jupiter',Ve:'Venus',Sa:'Saturn',Ra:'Rahu',Ke:'Ketu'};
+    this.PORDER = ['Su','Mo','Ma','Me','Ju','Ve','Sa','Ra','Ke'];
+    this.POLY = ['200,0 100,100 200,200 300,100','200,0 0,0 100,100','0,0 0,200 100,100','0,200 100,100 200,200 100,300','0,200 0,400 100,300','0,400 200,400 100,300','200,400 100,300 200,200 300,300','200,400 400,400 300,300','400,400 400,200 300,300','400,200 300,100 200,200 300,300','400,200 400,0 300,100','400,0 200,0 300,100'];
+    this.CEN = [[200,100],[100,40],[40,100],[100,200],[40,300],[100,360],[200,300],[300,360],[360,300],[300,200],[360,100],[300,40]];
+    const aarav = {
+      id:'aarav', name:'Aarav Sharma', date:'14 Aug 1991', place:'04:32 · Pune, IN', ascSign:5,
+      houses:[['Su','Me'],['Ve'],[],['Mo'],['Ju'],['Ra'],['Sa'],[],[],['Ma'],[],['Ke']],
+      notes:{whole:"Leo Lagna with Sun + Mercury in the 1st — strong sense of self, articulate, leadership wired into identity. Budha-Aditya yoga right on the ascendant.\n\nMars in the 10th (Taurus) — steady, immovable career drive; persistence over aggression.\nMoon in the 4th (Scorpio) — emotional depth, private inner world, needs solitude to recharge.\nSaturn in the 7th — delayed but durable partnerships; growth through relationship.\n\nWatch: Rahu in the 6th channels into work & service; can over-identify with problems to solve.",houses:{}},
+      savedAt: Date.now()-120000
+    };
+    const self = { id:'self', name:'Self · natal', date:'02 Mar 1994', place:'09:10 · Jaipur, IN', ascSign:1,
+      houses:[[],[],['Mo'],[],['Su','Me'],[],['Sa'],[],[],['Ju'],['Ma'],['Ve','Ra']],
+      notes:{whole:'',houses:{}}, savedAt:Date.now()-86400000 };
+    const gandhi = { id:'gandhi', name:'Practice · Gandhi', date:'02 Oct 1869', place:'Porbandar, IN', ascSign:7,
+      houses:[[],['Mo'],[],['Ju'],[],[],['Su','Ve','Ma','Me'],['Ke'],[],[],[],['Sa','Ra']],
+      notes:{whole:'',houses:{}}, savedAt:Date.now()-3*86400000 };
+    this.state = {
+      screen:'home', activeId:'aarav', charts:[aarav, self, gandhi],
+      varga:'D1', noteScope:'whole', dictating:false, toast:null,
+      draft:{ name:'', date:'', place:'', ascSign:1, houses:[[],[],[],[],[],[],[],[],[],[],[],[]], computed:false },
+      placeTool:null, sidebarOpen:true, notesOpen:true, editId:null, menuId:null, query:'',
+      vw: (typeof window!=='undefined'? window.innerWidth : 1280)
+    };
+    this._onResize = ()=>this.setState({vw:window.innerWidth});
+  }
+  componentDidMount(){
+    window.addEventListener('resize', this._onResize);
+    if(window.innerWidth < 860) this.setState({sidebarOpen:false, notesOpen:false});
+  }
+  componentWillUnmount(){ window.removeEventListener('resize', this._onResize); this.stopDictate(); clearTimeout(this._tt); }
+
+  signOf(i, asc){ return ((asc-1+i)%12)+1; }
+  active(){ return this.state.charts.find(c=>c.id===this.state.activeId); }
+
+  chart(houses, asc, opts){
+    opts = opts||{};
+    const R = React.createElement, T='#C9A957', SUB='#B2A079', ACC='#A8742B';
+    const k=[];
+    k.push(R('rect',{key:'sq',x:2,y:2,width:396,height:396,rx:6,fill:'#FCFAF4',stroke:T,strokeWidth:1.6}));
+    k.push(R('polygon',{key:'asc',points:this.POLY[0],fill:'#F1E6CF',opacity:0.85}));
+    if(opts.selected!=null && opts.selected!==0) k.push(R('polygon',{key:'sel',points:this.POLY[opts.selected],fill:'#A8742B',opacity:0.16}));
+    k.push(R('line',{key:'d1',x1:2,y1:2,x2:398,y2:398,stroke:T,strokeWidth:1.4}));
+    k.push(R('line',{key:'d2',x1:398,y1:2,x2:2,y2:398,stroke:T,strokeWidth:1.4}));
+    k.push(R('polygon',{key:'dia',points:'200,2 398,200 200,398 2,200',fill:'none',stroke:T,strokeWidth:1.4}));
+    for(let i=0;i<12;i++){
+      const c=this.CEN[i], sign=this.signOf(i,asc), pl=houses[i]||[];
+      k.push(R('text',{key:'s'+i,x:c[0],y:c[1]-11,textAnchor:'middle',fontSize:10,fontWeight:600,fill:SUB,fontFamily:'Hanken Grotesk',style:{pointerEvents:'none'}},String(sign)));
+      if(pl.length) k.push(R('text',{key:'p'+i,x:c[0],y:c[1]+8,textAnchor:'middle',fontSize:13.5,fontWeight:700,fill:i===0?ACC:'#9A6A28',fontFamily:'Hanken Grotesk',letterSpacing:0.4,style:{pointerEvents:'none'}},pl.join('  ')));
+      if(i===0) k.push(R('text',{key:'a',x:c[0],y:c[1]+24,textAnchor:'middle',fontSize:8,fontWeight:700,fill:ACC,fontFamily:'Hanken Grotesk',letterSpacing:1.5,style:{pointerEvents:'none'}},'ASC'));
+    }
+    if(opts.onHouse){
+      for(let i=0;i<12;i++) k.push(R('polygon',{key:'h'+i,points:this.POLY[i],fill:'transparent',stroke:'transparent',style:{cursor:'pointer'},onClick:()=>opts.onHouse(i)}));
+    }
+    return R('svg',{viewBox:'0 0 400 400',width:'100%',height:'100%',style:{display:'block'}},k);
+  }
+  svgMarkup(houses, asc){
+    const T='#C9A957',SUB='#B2A079',ACC='#A8742B';
+    let s=`<svg xmlns='http://www.w3.org/2000/svg' width='560' height='560' viewBox='0 0 400 400'>`;
+    s+=`<rect x='2' y='2' width='396' height='396' rx='6' fill='#FCFAF4' stroke='${T}' stroke-width='1.6'/>`;
+    s+=`<polygon points='${this.POLY[0]}' fill='#F1E6CF' opacity='0.85'/>`;
+    s+=`<line x1='2' y1='2' x2='398' y2='398' stroke='${T}' stroke-width='1.4'/><line x1='398' y1='2' x2='2' y2='398' stroke='${T}' stroke-width='1.4'/>`;
+    s+=`<polygon points='200,2 398,200 200,398 2,200' fill='none' stroke='${T}' stroke-width='1.4'/>`;
+    for(let i=0;i<12;i++){const c=this.CEN[i],sign=this.signOf(i,asc),pl=houses[i]||[];
+      s+=`<text x='${c[0]}' y='${c[1]-11}' text-anchor='middle' font-size='10' font-weight='600' fill='${SUB}' font-family='Arial'>${sign}</text>`;
+      if(pl.length)s+=`<text x='${c[0]}' y='${c[1]+8}' text-anchor='middle' font-size='13.5' font-weight='700' fill='${i===0?ACC:'#9A6A28'}' font-family='Arial'>${pl.join('  ')}</text>`;
+      if(i===0)s+=`<text x='${c[0]}' y='${c[1]+24}' text-anchor='middle' font-size='8' font-weight='700' fill='${ACC}' font-family='Arial'>ASC</text>`;
+    }
+    return s+'</svg>';
+  }
+  svgToPng(svgStr, size){
+    return new Promise((res)=>{
+      const img=new Image();
+      const url='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svgStr);
+      img.onload=()=>{ const cv=document.createElement('canvas'); cv.width=size; cv.height=size; const ctx=cv.getContext('2d'); ctx.fillStyle='#FCFAF4'; ctx.fillRect(0,0,size,size); ctx.drawImage(img,0,0,size,size); res(cv.toDataURL('image/png')); };
+      img.onerror=()=>res(null);
+      img.src=url;
+    });
+  }
+  download(filename, blob){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=filename; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },600); }
+  async exportDoc(){
+    const c=this.active(); if(!c) return;
+    const png=await this.svgToPng(this.svgMarkup(c.houses,c.ascSign), 560);
+    const esc=t=>(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const nl=t=>esc(t).replace(/\n/g,'<br/>');
+    let rows='';
+    this.PORDER.forEach(code=>{ for(let i=0;i<12;i++){ if(c.houses[i].includes(code)){ rows+=`<tr><td style='padding:4px 10px'><b>${code}</b> ${this.PMETA[code]}</td><td style='padding:4px 10px'>${this.SIGNS[this.signOf(i,c.ascSign)-1]}</td><td style='padding:4px 10px'>House ${i+1}</td></tr>`; }}});
+    let notesHtml='';
+    if(c.notes.whole) notesHtml+=`<h3 style='font-family:Georgia,serif'>Whole chart</h3><p>${nl(c.notes.whole)}</p>`;
+    Object.keys(c.notes.houses||{}).forEach(k=>{ if((c.notes.houses[k]||'').trim()) notesHtml+=`<h3 style='font-family:Georgia,serif'>House ${Number(k)+1}</h3><p>${nl(c.notes.houses[k])}</p>`; });
+    if(!notesHtml) notesHtml='<p><i>No notes yet.</i></p>';
+    const html=`<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>${esc(c.name)} — Nakshatra</title></head><body style="font-family:Calibri,Arial,sans-serif;color:#2C2820;line-height:1.5">
+<h1 style='font-family:Georgia,serif;color:#7A521C;margin-bottom:2px'>${esc(c.name)}</h1>
+<p style='color:#777;margin-top:0'>${esc(c.date)}${c.place?' &middot; '+esc(c.place):''} &middot; ${this.SIGNS[c.ascSign-1]} Lagna &middot; Lahiri ayan&#257;m&#347;a</p>
+${png?`<p><img src='${png}' width='340' height='340' alt='North Indian chart'/></p>`:''}
+<h2 style='font-family:Georgia,serif;color:#7A521C'>Planet positions</h2>
+<table cellspacing='0' style='border-collapse:collapse;border:1px solid #ddd'>${rows||"<tr><td style='padding:6px'>No planets placed.</td></tr>"}</table>
+<h2 style='font-family:Georgia,serif;color:#7A521C'>Notes</h2>
+${notesHtml}
+<p style='color:#aaa;font-size:11px;margin-top:28px'>Exported from Nak&#7779;atra &middot; ${new Date().toLocaleDateString()}</p>
+</body></html>`;
+    this.download(`${(c.name||'chart').replace(/[^\w]+/g,'_')}.doc`, new Blob(['\ufeff'+html],{type:'application/msword'}));
+    this.flash('Word document exported (.doc)');
+  }
+
+  // ---- nav / panels ----
+  go(s){ this.setState({screen:s}); if(this.state.vw<860) this.setState({sidebarOpen:false}); }
+  toggleSidebar(){ this.setState(s=>({sidebarOpen:!s.sidebarOpen})); }
+  toggleNotes(){ this.setState(s=>({notesOpen:!s.notesOpen})); }
+  startNew(){ this.setState({screen:'create', draft:{name:'',date:'',place:'',ascSign:1,houses:[[],[],[],[],[],[],[],[],[],[],[],[]],computed:false}, placeTool:null, editId:null, menuId:null}); if(this.state.vw<860) this.setState({sidebarOpen:false}); }
+  startEdit(id){ const c=this.state.charts.find(x=>x.id===id); if(!c) return; this.setState({draft:{name:c.name, date:c.date==='—'?'':c.date, place:c.place, ascSign:c.ascSign, houses:c.houses.map(a=>a.slice()), computed:false}, editId:id, menuId:null, placeTool:null, screen:'create'}); if(this.state.vw<860) this.setState({sidebarOpen:false}); }
+  duplicateChart(id){ const c=this.state.charts.find(x=>x.id===id); if(!c) return; const nid='c'+Date.now(); const copy={id:nid, name:c.name+' (copy)', date:c.date, place:c.place, ascSign:c.ascSign, houses:c.houses.map(a=>a.slice()), notes:{whole:c.notes.whole, houses:{...c.notes.houses}}, savedAt:null}; this.setState(s=>({charts:[copy, ...s.charts], activeId:nid, screen:'chart', menuId:null})); this.flash('Chart duplicated'); }
+  deleteChart(id){ if(!window.confirm('Delete this chart? This cannot be undone.')) return; this.setState(s=>{ const charts=s.charts.filter(c=>c.id!==id); return {charts, menuId:null, screen:'home', activeId: charts[0]?charts[0].id:null}; }); this.flash('Chart deleted'); }
+  toggleMenu(id){ this.setState(s=>({menuId: s.menuId===id?null:id})); }
+  openChart(id){ this.stopDictate(); this.setState({screen:'chart', activeId:id, noteScope:'whole', dictating:false}); if(this.state.vw<860) this.setState({sidebarOpen:false, notesOpen:false}); }
+
+  // ---- create ----
+  setDraft(p){ this.setState(s=>({draft:{...s.draft, ...p}})); }
+  armPlanet(code){ this.setState(s=>({placeTool: s.placeTool===code?null:code})); }
+  placeAt(i){
+    const tool=this.state.placeTool; if(!tool) return;
+    this.setState(s=>{ const h=s.draft.houses.map(a=>a.filter(p=>p!==tool)); if(!s.draft.houses[i].includes(tool)) h[i]=[...h[i],tool]; return {draft:{...s.draft, houses:h}}; });
+  }
+  hash(str){ let h=2166136261; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619); } return Math.abs(h); }
+  computeChart(){
+    const d=this.state.draft;
+    const seed=this.hash((d.name||'seed')+'|'+(d.date||'')+'|'+(d.place||''));
+    const asc=(seed%12)+1;
+    const houses=Array.from({length:12},()=>[]);
+    this.PORDER.forEach((p,idx)=>{ const h=(Math.floor(seed/(idx+1)) + idx*idx*7 + idx*5)%12; houses[h].push(p); });
+    this.setState({draft:{...d, ascSign:asc, houses, computed:true}});
+    this.flash('Chart computed from birth details (API preview)');
+  }
+  saveDraft(){
+    const d=this.state.draft; if(!d.name.trim()) return;
+    if(this.state.editId){
+      const eid=this.state.editId;
+      this.setState(s=>({charts:s.charts.map(c=>c.id===eid?{...c, name:d.name.trim(), date:d.date||'—', place:d.place||'', ascSign:Number(d.ascSign), houses:d.houses.map(a=>a.slice())}:c), editId:null, screen:'chart', activeId:eid}));
+      this.flash('Chart updated'); return;
+    }
+    const id='c'+Date.now();
+    const chart={ id, name:d.name.trim(), date:d.date||'—', place:d.place||'', ascSign:Number(d.ascSign), houses:d.houses.map(a=>a.slice()), notes:{whole:'',houses:{}}, savedAt:null };
+    this.setState(s=>({charts:[chart, ...s.charts], activeId:id, screen:'chart', noteScope:'whole'}));
+    if(this.state.vw<860) this.setState({notesOpen:false});
+  }
+
+  // ---- workspace ----
+  setVarga(v){ this.setState({varga:v}); }
+  setScope(sc){ this.setState({noteScope:sc}); }
+  writeNote(id, sc, text){
+    this.setState(s=>({charts:s.charts.map(c=>{ if(c.id!==id) return c; const notes={...c.notes, houses:{...c.notes.houses}}; if(sc==='whole') notes.whole=text; else notes.houses[sc]=text; return {...c, notes}; })}));
+  }
+  setNote(text){ this.writeNote(this.state.activeId, 'whole', text); }
+  houseClickWorkspace(i){ this.setState(s=>({noteScope: s.noteScope===i?'whole':i})); }
+  stopDictate(){ if(this._di){ clearInterval(this._di); this._di=null; } }
+  toggleDictate(){
+    if(this.state.dictating){ this.stopDictate(); this.setState({dictating:false}); return; }
+    const words="Jupiter in the fifth gives a genuine love of learning and a natural gift for teaching others.".split(' ');
+    let n=0; this.setState({dictating:true});
+    this._di=setInterval(()=>{
+      if(n>=words.length){ this.stopDictate(); this.setState({dictating:false}); return; }
+      const id=this.state.activeId, w=words[n++];
+      const c=this.state.charts.find(x=>x.id===id); if(!c){ this.stopDictate(); return; }
+      const cur=c.notes.whole||'';
+      this.writeNote(id, 'whole', (cur && !cur.endsWith('\n')? cur+' ':cur)+w);
+    },230);
+  }
+  saveToDrive(){
+    const id=this.state.activeId;
+    this.setState(s=>({charts:s.charts.map(c=>c.id===id?{...c,savedAt:Date.now()}:c)}));
+    this.flash('Saved to Google Drive · /Astro Karma/charts');
+  }
+  flash(msg){ this.setState({toast:msg}); clearTimeout(this._tt); this._tt=setTimeout(()=>this.setState({toast:null}),2200); }
+  rel(ts){ if(!ts) return null; const d=Date.now()-ts; if(d<60000) return 'just now'; if(d<3600000) return Math.floor(d/60000)+'m ago'; if(d<86400000) return Math.floor(d/3600000)+'h ago'; return Math.floor(d/86400000)+'d ago'; }
+
+  renderVals(){
+    const s=this.state, mobile = s.vw < 860;
+    const navItem=(active)=>`display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:9px;font-size:13.5px;font-weight:${active?600:500};text-align:left;border:none;cursor:pointer;font-family:inherit;background:${active?'#F1E6CF':'transparent'};color:${active?'#7A521C':'#978B73'}`;
+    const recent=s.charts.map(c=>({ id:c.id, name:c.name, sub:`${c.date} · ${this.SIGNS[c.ascSign-1]} Lagna`, style:`padding:9px 11px;border-radius:9px;cursor:pointer;border:1px solid ${c.id===s.activeId&&s.screen==='chart'?'#E5DCC8':'transparent'};background:${c.id===s.activeId&&s.screen==='chart'?'#F3ECDD':'transparent'}`, open:()=>this.openChart(c.id) }));
+    const q=(s.query||'').trim().toLowerCase();
+    const gallery=s.charts.filter(c=> !q || [c.name, this.SIGNS[c.ascSign-1]+' lagna', c.place, c.date].join(' ').toLowerCase().includes(q)).map(c=>({ id:c.id, name:c.name, sub:`${c.date}${c.place?' · '+c.place:''}`, initial:(c.name.match(/[A-Za-z]/)||['★'])[0].toUpperCase(), ascName:this.SIGNS[c.ascSign-1], planetCount:c.houses.reduce((a,h)=>a+h.length,0),
+      open:(e)=>{ if(e&&e.stopPropagation)e.stopPropagation(); this.openChart(c.id); },
+      menuOpen:s.menuId===c.id, toggleMenu:(e)=>{ e.stopPropagation(); this.toggleMenu(c.id); },
+      edit:(e)=>{ e.stopPropagation(); this.startEdit(c.id); }, duplicate:(e)=>{ e.stopPropagation(); this.duplicateChart(c.id); }, del:(e)=>{ e.stopPropagation(); this.deleteChart(c.id); } }));
+
+    const placed=new Set([].concat(...s.draft.houses));
+    const palette=this.PORDER.map(code=>{ const isPlaced=placed.has(code), armed=s.placeTool===code; return { code, name:this.PMETA[code], arm:()=>this.armPlanet(code), style:`font-family:inherit;font-size:12.5px;padding:7px 11px;border-radius:8px;cursor:pointer;border:1px solid ${armed?'#A8742B':'#E5DCC8'};background:${armed?'#A8742B':(isPlaced?'#F1E6CF':'#FBF7EF')};color:${armed?'#FFFBF3':(isPlaced?'#7A521C':'#2C2820')};font-weight:600` }; });
+    const signOptions=this.SIGNS.map((n,i)=>({name:n, value:String(i+1)}));
+    const placeHint=s.placeTool? `placing ${this.PMETA[s.placeTool]} — click a house` : 'pick a planet to place';
+    const canSave=s.draft.name.trim()!=='';
+    const saveDraftStyle=`border:none;font-family:inherit;font-size:13.5px;font-weight:600;padding:11px 18px;border-radius:9px;cursor:${canSave?'pointer':'not-allowed'};background:${canSave?'#A8742B':'#E5DCC8'};color:${canSave?'#FFFBF3':'#B2A079'}`;
+
+    const c=this.active();
+    const vargas=[['D1','D1 · Rāśi'],['D9','D9 · Navāṁśa'],['D10','D10 · Daśāṁśa'],['D12','D12'],['D24','D24'],['D30','D30'],['D60','D60']];
+    const vargaTabs=vargas.map(([id,label])=>({ label, select:()=>this.setVarga(id), style:`font-family:inherit;font-size:12.5px;font-weight:${s.varga===id?600:500};padding:7px 13px;border-radius:8px;cursor:pointer;border:1px solid ${s.varga===id?'#A8742B':'#E5DCC8'};background:${s.varga===id?'#A8742B':'#FBF7EF'};color:${s.varga===id?'#FFFBF3':'#978B73'}` }));
+    const vargaLabel=(vargas.find(v=>v[0]===s.varga)||['','D1'])[1];
+
+    let legend=[], noteText='', activeName='', activeMeta='', lagnaName='', planetCountLabel='', savedLabel='', savedDot='#B2A079', notePlaceholder='Write what you notice about this chart…';
+    if(c){
+      activeName=c.name; activeMeta=`${c.date}${c.place?' · '+c.place:''} · Lahiri ayanāṁśa`; lagnaName=this.SIGNS[c.ascSign-1];
+      planetCountLabel=`${c.houses.reduce((a,h)=>a+h.length,0)} planets placed`;
+      this.PORDER.forEach(code=>{ for(let i=0;i<12;i++){ if(c.houses[i].includes(code)) legend.push({code,name:this.PMETA[code],pos:`${this.SIGNS[this.signOf(i,c.ascSign)-1]} · House ${i+1}`}); }});
+      noteText=c.notes.whole;
+      const r=this.rel(c.savedAt); savedLabel=c.savedAt?`Saved to Drive · ${r}`:'Unsaved — not on Drive yet'; savedDot=c.savedAt?'#3FB27F':'#C99A3F';
+    }
+
+    const libraryCards=[
+      {title:'Lagna & the 1st house', count:'6 notes', body:'Planets on the ascendant colour the whole personality. Sun on the Lagna → identity built on visibility and leadership; Budha-Aditya adds sharp expression.', tags:['#lagna','#budha-aditya','#identity']},
+      {title:'Mars by house', count:'9 notes', body:'Mars in the 10th = relentless, steady career engine (earth signs especially). In the 7th it can heat up partnerships — direct, impatient with delay.', tags:['#mars','#10th-house','#drive']},
+      {title:'Rahu / Ketu axis', count:'4 notes', body:'Rahu in the 6th pours ambition into work, service and problem-solving; Ketu opposite in the 12th quietly detaches. Watch over-identification with the fight.', tags:['#rahu','#nodes','#6-12-axis']},
+      {title:'Saturn lessons', count:'5 notes', body:'Saturn delays then secures. In the 7th, partnerships arrive late but endure; the lesson is patience and earned trust rather than denial.', tags:['#saturn','#patience','#7th-house']},
+    ];
+
+    const sidebarStyle = mobile
+      ? `position:absolute;left:0;top:0;bottom:0;width:256px;z-index:30;box-shadow:2px 0 18px rgba(0,0,0,.18);border-right:1px solid #E5DCC8;background:#FBF7EF;display:flex;flex-direction:column;padding:18px 14px`
+      : `width:236px;flex:none;border-right:1px solid #E5DCC8;background:#FBF7EF;display:flex;flex-direction:column;padding:18px 14px`;
+    const notesPanelStyle = mobile
+      ? `position:absolute;right:0;top:0;bottom:0;width:88vw;max-width:400px;z-index:30;box-shadow:-2px 0 18px rgba(0,0,0,.18);border-left:1px solid #E5DCC8;background:#FBF7EF;display:flex;flex-direction:column`
+      : `width:392px;flex:none;border-left:1px solid #E5DCC8;background:#FBF7EF;display:flex;flex-direction:column`;
+
+    return {
+      showDrive:!mobile, isHome:s.screen==='home', isCreate:s.screen==='create', isChart:s.screen==='chart', isLibrary:s.screen==='library',
+      navHome:navItem(s.screen==='home'||s.screen==='chart'||s.screen==='create'), navLib:navItem(s.screen==='library'),
+      goHome:()=>this.go('home'), goLibrary:()=>this.go('library'), startNew:()=>this.startNew(),
+      toggleSidebar:()=>this.toggleSidebar(), toggleNotes:()=>this.toggleNotes(),
+      sidebarOpen:s.sidebarOpen, sidebarStyle, sidebarBackdrop: mobile && s.sidebarOpen,
+      recentCharts:recent, galleryCharts:gallery, query:s.query, onQuery:e=>this.setState({query:e.target.value}),
+      newLabel: mobile?'＋':'＋ Add chart', exportLabel: mobile?'⤓':'⤓ Export .doc', exportDoc:()=>this.exportDoc(),
+      // create
+      draftName:s.draft.name, draftDate:s.draft.date, draftPlace:s.draft.place, draftAsc:String(s.draft.ascSign), draftComputed:s.draft.computed,
+      onName:e=>this.setDraft({name:e.target.value}), onDate:e=>this.setDraft({date:e.target.value}), onPlace:e=>this.setDraft({place:e.target.value}), onAsc:e=>this.setDraft({ascSign:Number(e.target.value)}),
+      signOptions, palette, placeHint, saveDraft:()=>this.saveDraft(), saveDraftStyle, computeChart:()=>this.computeChart(),
+      chartCreate:this.chart(s.draft.houses, Number(s.draft.ascSign), {onHouse:i=>this.placeAt(i)}),
+      // workspace
+      chartRowStyle:`flex:1;min-width:0;display:flex;position:relative;${mobile?'overflow:hidden':'overflow-x:auto;overflow-y:hidden'}`,
+      chartColStyle:`flex:1;min-width:${mobile?'0':'452px'};display:flex;flex-direction:column;overflow:auto;padding:${mobile?'16px':'22px 26px'}`,
+      activeName, activeMeta, lagnaName, planetCountLabel, vargaTabs, vargaLabel,
+      chartWorkspace: c? this.chart(c.houses, c.ascSign, {}) : null,
+      legend, noteText, notePlaceholder, onNoteChange:e=>this.setNote(e.target.value),
+      editActive:()=>this.startEdit(s.activeId), duplicateActive:()=>this.duplicateChart(s.activeId), deleteActive:()=>this.deleteChart(s.activeId),
+      createTitle: s.editId?'Edit chart':'New chart', saveLabel: s.editId?'Save changes':'Create chart & open notes →',
+      notesOpen:s.notesOpen, notesPanelStyle, notesBackdrop: mobile && s.notesOpen, notesRail: !s.notesOpen && !mobile, notesFab: !s.notesOpen && mobile,
+      dictating:s.dictating, toggleDictate:()=>this.toggleDictate(), dictateLabel: s.dictating?' Stop':' Dictate',
+      dictateStyle:`position:relative;display:flex;align-items:center;gap:7px;border:none;font-family:inherit;font-size:13px;font-weight:600;padding:8px 14px;border-radius:20px;cursor:pointer;background:${s.dictating?'#7A521C':'#A8742B'};color:#FFFBF3`,
+      pulseStyle: s.dictating? 'position:absolute;left:2px;top:0;width:36px;height:36px;border-radius:50%;background:#A8742B;animation:nk-pulse 1.6s ease-out infinite;pointer-events:none' : 'display:none',
+      dictatePreview: s.dictating? '● listening…' : '',
+      savedLabel, savedDot, saveToDrive:()=>this.saveToDrive(),
+      libraryCards, toast:s.toast,
+    };
+  }
+}
+</script>
+</body>
+</html>
