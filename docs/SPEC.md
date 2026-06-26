@@ -173,6 +173,7 @@ Postgres tables. (`houses`/positions stored as JSONB for flexibility; one row pe
 | houses | jsonb | 12-element array of planet-code arrays (D1). e.g. `[["Su","Me"],["Ve"],…]` |
 | computed | bool | true if generated from ephemeris (vs manual) |
 | positions | jsonb | optional richer per-planet data (longitude, nakshatra, retro) when generated |
+| vargas | jsonb | manual divisional charts keyed by varga: `{"D9": {"ascSign", "houses"}, …}` (D1 lives in `asc_sign`/`houses`) |
 | created_at / updated_at | timestamptz | |
 
 > **Planet codes:** `Su Mo Ma Me Ju Ve Sa Ra Ke`. **Signs:** 1=Aries … 12=Pisces.
@@ -274,23 +275,30 @@ No backend involved. (Later: optional server-side email of the export via SES.)
 
 ## 10. Build phases
 
-**Phase 0 — Scaffold**
+> **Status (current):** Phases 0–3 are built and verified locally. A product decision since
+> then: **chart generation (Swiss Ephemeris) is disabled in the UI** and charts are placed
+> **manually for every varga (D1–D60)** — stored in `charts.vargas`. The ephemeris backend
+> (`/api/generate`, `app/astro`) remains intact but dormant. **Google Drive is not yet
+> integrated** — "Save to Drive" persists notes to the DB; real Drive sync is backlog.
+> Local API runs on **port 8077** (8000 is commonly taken); the launcher starts both tiers.
+
+**Phase 0 — Scaffold** ✅
 - Init `web/` (Vite React TS) and `api/` (FastAPI). Drop in design tokens, fonts, base
   layout (top bar + sidebar shell). Dockerfile for api. Local dev with SQLite for speed.
 
-**Phase 1 — Frontend with mock/local data (no real backend yet)**
+**Phase 1 — Frontend with mock/local data** ✅
 - Build all four screens faithfully (Home, Create/Edit, Workspace, Library) + the
   North-Indian SVG, manual planet placement, search, duplicate/edit/delete, notes editor,
-  toasts, responsive drawers. Persist to local cache. Client-side Word export working.
-- *Outcome:* a fully clickable, useful app matching the prototype.
+  toasts. Client-side Word export working.
 
-**Phase 2 — Real backend + DB + auth**
-- FastAPI CRUD over Postgres; Google OAuth + JWT; wire the client to the API (TanStack
-  Query). Replace local persistence with DB as source of truth (local = cache).
+**Phase 2 — Real backend + DB + auth** ✅
+- FastAPI CRUD over Postgres/SQLite; JWT auth (dev-login locally; Google OAuth verify ready
+  for prod); client wired to the API. DB is the source of truth (store = cache).
 
-**Phase 3 — Chart generation**
-- Geocoding + `pyswisseph` (Lahiri); `/generate` and D1/D9 varga endpoints. Replace the
-  prototype's mock `computeChart` with real ephemeris results.
+**Phase 3 — Chart generation** ✅ *(then disabled in UI by product decision)*
+- Geocoding + `pyswisseph` (Lahiri); `/generate` and D1/D9 varga endpoints, built and
+  verified. Superseded by **manual per-varga placement** (`charts.vargas`); the ephemeris
+  code is kept dormant for later re-enable (or a future hosted-API provider).
 
 **Phase 4 — Deploy on AWS**
 - Web → S3 + CloudFront; api → ECR + App Runner; DB → RDS Postgres; secrets → SSM;
@@ -301,8 +309,11 @@ No backend involved. (Later: optional server-side email of the export via SES.)
   `flashcards` table. Library screen aggregates/queries real cards; add a review mode.
 
 **Later / backlog**
-- More vargas (D10, D12, D24, D30, D60); real voice dictation (Web Speech API replacing the
-  simulated stream); S3/Drive backup export; SES email export; dashas/transits.
+- **Google Drive sync** (OAuth Drive scope + upload endpoint + token storage) to make
+  "Save to Drive" real; until then notes save to the DB. Optionally a hosted ephemeris
+  provider (e.g. freeastrologyapi) behind `/api/generate` to re-enable auto-generation.
+- Real voice dictation (Web Speech API replacing the simulated stream); S3 backup export;
+  SES email export; dashas/transits.
 
 ---
 

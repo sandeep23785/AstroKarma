@@ -97,7 +97,12 @@ HTML. See `exportDoc()` / `svgToPng()` in the reference.
 
 ## Vargas (divisional charts)
 
-The design exposes tabs D1, D9, D10, D12, D24, D30, D60. **Current scope: D1 + D9.**
+> **Current build:** divisional charts are entered **manually**, per varga (D1–D60), and
+> stored in `charts.vargas`. The automatic navāṁśa/varga math below is implemented in
+> `app/astro/vargas.py` but **not used by the UI** right now (auto-generate is disabled).
+> Keep it for when ephemeris generation is re-enabled.
+
+The design exposes tabs D1, D9, D10, D12, D24, D30, D60. **Computed scope (dormant): D1 + D9.**
 
 - **D1 (Rāśi):** the base chart — planets by their rāśi sign/house as above.
 - **D9 (Navāṁśa):** computed from each planet's **sidereal longitude** (from `pyswisseph`),
