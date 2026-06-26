@@ -58,3 +58,17 @@ export async function ensureAuth(): Promise<void> {
   const r = await api.post<{ token: string }>('/api/auth/dev-login', {})
   setToken(r.token)
 }
+
+// --- Google Drive ("Save to Drive") ---
+export interface DriveStatus {
+  configured: boolean
+  connected: boolean
+}
+
+export const drive = {
+  status: () => api.get<DriveStatus>('/api/drive/status'),
+  authUrl: () => api.get<{ url: string }>('/api/drive/auth-url'),
+  upload: (body: { filename: string; contentBase64: string; mime: string }) =>
+    api.post<{ link: string | null }>('/api/drive/upload', body),
+  disconnect: () => api.del<void>('/api/drive/disconnect'),
+}

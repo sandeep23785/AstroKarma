@@ -4,6 +4,8 @@ import { useCharts, relativeTime } from '../store/useCharts'
 import { useToast } from '../store/useToast'
 import { SIGNS, PMETA, PORDER, signOf, VARGAS, VARGA_LABEL } from '../lib/astro'
 import { NorthIndianChart } from '../components/NorthIndianChart'
+import { drive } from '../lib/api'
+import { chartDocBase64 } from '../lib/exportDoc'
 
 const pillStyle: React.CSSProperties = {
   fontSize: 12,
@@ -86,6 +88,45 @@ export function ChartScreen() {
       navigate(nextId ? `/chart/${nextId}` : '/')
     } catch {
       flash('Could not delete chart')
+    }
+  }
+
+  // Persist the note to the DB, then upload the chart's .doc to Google Drive.
+  // If Drive isn't connected yet, kick off the Google consent flow.
+  const saveToDrive = async () => {
+    try {
+      await saveNote(chart.id)
+    } catch {
+      flash('Could not save note')
+      return
+    }
+    let st
+    try {
+      st = await drive.status()
+    } catch {
+      flash('Note saved. Could not reach Drive.')
+      return
+    }
+    if (!st.configured) {
+      flash('Note saved. Google Drive is not set up yet.')
+      return
+    }
+    if (!st.connected) {
+      flash('Connecting Google Drive…')
+      try {
+        const { url } = await drive.authUrl()
+        window.location.href = url
+      } catch {
+        flash('Could not start Google Drive connection')
+      }
+      return
+    }
+    try {
+      const doc = await chartDocBase64(chart)
+      await drive.upload(doc)
+      flash('Saved to Google Drive · /Astro Karma/charts')
+    } catch (e) {
+      flash((e as Error).message)
     }
   }
 
@@ -351,14 +392,7 @@ export function ChartScreen() {
               {savedLabel}
             </span>
             <button
-              onClick={async () => {
-                try {
-                  await saveNote(chart.id)
-                  flash('Saved · /Astro Karma/charts')
-                } catch {
-                  flash('Could not save note')
-                }
-              }}
+              onClick={saveToDrive}
               style={{
                 border: 'none',
                 background: 'var(--accent)',

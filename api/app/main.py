@@ -7,6 +7,7 @@ from .config import settings
 from .db import Base, engine
 from .routers import auth as auth_router
 from .routers import charts as charts_router
+from .routers import drive as drive_router
 from .routers import generate as generate_router
 
 app = FastAPI(title=settings.app_name, version="0.2.0")
@@ -26,10 +27,13 @@ Base.metadata.create_all(bind=engine)
 def _ensure_columns() -> None:
     """Lightweight additive migration so existing local DBs gain new columns."""
     inspector = inspect(engine)
-    existing = {c["name"] for c in inspector.get_columns("charts")}
-    if "vargas" not in existing:
-        with engine.begin() as conn:
+    chart_cols = {c["name"] for c in inspector.get_columns("charts")}
+    user_cols = {c["name"] for c in inspector.get_columns("users")}
+    with engine.begin() as conn:
+        if "vargas" not in chart_cols:
             conn.execute(text("ALTER TABLE charts ADD COLUMN vargas JSON"))
+        if "drive_refresh_token" not in user_cols:
+            conn.execute(text("ALTER TABLE users ADD COLUMN drive_refresh_token VARCHAR"))
 
 
 _ensure_columns()
@@ -37,6 +41,7 @@ _ensure_columns()
 app.include_router(auth_router.router)
 app.include_router(charts_router.router)
 app.include_router(generate_router.router)
+app.include_router(drive_router.router)
 
 
 @app.get("/api/health")

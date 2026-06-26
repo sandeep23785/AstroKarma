@@ -18,6 +18,10 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expire_days: int = 30
 
+    # Google Drive (Save to Drive). Uses the same OAuth client as login.
+    google_redirect_uri: str = "http://localhost:8077/api/drive/callback"
+    web_app_url: str = "http://localhost:5173"
+
     # AI (later phase)
     anthropic_api_key: str = ""
 

@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react'
 import { useNavigate, useMatch } from 'react-router-dom'
 import { useCharts } from '../store/useCharts'
 import { useToast } from '../store/useToast'
 import { exportChartDoc } from '../lib/exportDoc'
+import { drive, type DriveStatus } from '../lib/api'
 
 export function TopBar() {
   const navigate = useNavigate()
@@ -10,6 +12,26 @@ export function TopBar() {
   // Only the workspace (an existing chart) shows export — not /chart/new.
   const chart = useCharts((s) => (chartId ? s.charts.find((c) => c.id === chartId) : undefined))
   const flash = useToast((s) => s.flash)
+
+  const [driveStatus, setDriveStatus] = useState<DriveStatus | null>(null)
+  useEffect(() => {
+    drive.status().then(setDriveStatus).catch(() => setDriveStatus(null))
+  }, [])
+
+  const connectDrive = async () => {
+    if (!driveStatus?.configured) {
+      flash('Google Drive is not set up yet (no credentials).')
+      return
+    }
+    try {
+      const { url } = await drive.authUrl()
+      window.location.href = url
+    } catch {
+      flash('Could not start Google Drive connection')
+    }
+  }
+
+  const driveConnected = !!driveStatus?.connected
 
   return (
     <header
@@ -56,10 +78,30 @@ export function TopBar() {
 
       <div style={{ flex: 1 }} />
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5, color: 'var(--sub-text)' }}>
-        <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--success)' }} />
-        Connected to Google Drive
-      </div>
+      <button
+        onClick={driveConnected ? undefined : connectDrive}
+        title={driveConnected ? 'Google Drive connected' : 'Click to connect Google Drive'}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 7,
+          fontSize: 12.5,
+          color: 'var(--sub-text)',
+          background: 'transparent',
+          border: 'none',
+          cursor: driveConnected ? 'default' : 'pointer',
+        }}
+      >
+        <span
+          style={{
+            width: 7,
+            height: 7,
+            borderRadius: '50%',
+            background: driveConnected ? 'var(--success)' : 'var(--faint)',
+          }}
+        />
+        {driveConnected ? 'Connected to Google Drive' : 'Connect Google Drive'}
+      </button>
 
       {chart && (
         <button

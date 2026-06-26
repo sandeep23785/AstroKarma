@@ -66,6 +66,25 @@ class GoogleLoginIn(BaseModel):
     credential: str
 
 
+class DriveStatus(BaseModel):
+    configured: bool
+    connected: bool
+
+
+class DriveAuthUrl(BaseModel):
+    url: str
+
+
+class DriveUploadIn(BaseModel):
+    filename: str
+    contentBase64: str
+    mime: str = "application/msword"
+
+
+class DriveUploadOut(BaseModel):
+    link: str | None
+
+
 class TokenOut(BaseModel):
     token: str
     user: UserOut

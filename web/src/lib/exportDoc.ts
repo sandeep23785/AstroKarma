@@ -64,8 +64,20 @@ const esc = (t: string) =>
   (t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 const nl = (t: string) => esc(t).replace(/\n/g, '<br/>')
 
-/** Build a Word-compatible .doc from a chart + its notes and trigger a download. */
-export async function exportChartDoc(c: Chart): Promise<void> {
+function docFilename(c: Chart): string {
+  return `${(c.name || 'chart').replace(/[^\w]+/g, '_')}.doc`
+}
+
+// UTF-8-safe base64 (for sending the .doc to the backend → Google Drive).
+function toBase64Utf8(str: string): string {
+  const bytes = new TextEncoder().encode(str)
+  let bin = ''
+  bytes.forEach((b) => (bin += String.fromCharCode(b)))
+  return btoa(bin)
+}
+
+/** Build the Word .doc HTML (D1 chart image + planet table + notes). */
+async function buildDocHtml(c: Chart): Promise<string> {
   const png = await svgToPng(svgMarkup(c.houses, c.ascSign), 560)
 
   let rows = ''
@@ -90,5 +102,23 @@ ${notesHtml}
 <p style='color:#aaa;font-size:11px;margin-top:28px'>Exported from Astro Karma &middot; ${new Date().toLocaleDateString()}</p>
 </body></html>`
 
-  download(`${(c.name || 'chart').replace(/[^\w]+/g, '_')}.doc`, new Blob(['﻿' + html], { type: 'application/msword' }))
+  return html
+}
+
+/** Build a Word-compatible .doc and trigger a download. */
+export async function exportChartDoc(c: Chart): Promise<void> {
+  const html = await buildDocHtml(c)
+  download(docFilename(c), new Blob(['﻿' + html], { type: 'application/msword' }))
+}
+
+/** Build the same .doc as base64 (for uploading to Google Drive). */
+export async function chartDocBase64(
+  c: Chart,
+): Promise<{ filename: string; contentBase64: string; mime: string }> {
+  const html = await buildDocHtml(c)
+  return {
+    filename: docFilename(c),
+    contentBase64: toBase64Utf8('﻿' + html),
+    mime: 'application/msword',
+  }
 }
