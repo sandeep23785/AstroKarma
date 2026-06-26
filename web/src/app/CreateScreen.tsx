@@ -2,25 +2,9 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useCharts, emptyHouses, type Draft } from '../store/useCharts'
 import { useToast } from '../store/useToast'
-import { SIGNS, PMETA, PORDER, type PlanetCode } from '../lib/astro'
+import { SIGNS, PMETA, PORDER, VARGAS, VARGA_LABEL, type PlanetCode } from '../lib/astro'
 import { NorthIndianChart } from '../components/NorthIndianChart'
-import { api } from '../lib/api'
-import type { ChartPositions } from '../types'
-
-interface GenerateResult {
-  ascSign: number
-  houses: PlanetCode[][]
-  positions: ChartPositions
-}
-
-// Split the "TIME & PLACE" field (e.g. "04:32 · Pune, IN") into its parts.
-function splitTimePlace(value: string): { time: string; place: string } {
-  const parts = value.split('·')
-  if (parts.length >= 2) {
-    return { time: parts[0].trim(), place: parts.slice(1).join('·').trim() }
-  }
-  return { time: '', place: value.trim() }
-}
+import type { VargaChart } from '../types'
 
 const inputStyle: React.CSSProperties = {
   fontSize: 14,
@@ -38,6 +22,16 @@ const fieldLabelStyle: React.CSSProperties = {
   fontSize: 12,
   fontWeight: 600,
   color: 'var(--sub-text)',
+}
+
+function cloneVargas(v: Record<string, VargaChart> | undefined): Record<string, VargaChart> {
+  if (!v) return {}
+  return Object.fromEntries(
+    Object.entries(v).map(([k, val]) => [
+      k,
+      { ascSign: val.ascSign, houses: val.houses.map((a) => a.slice()) },
+    ]),
+  )
 }
 
 export function CreateScreen() {
@@ -60,6 +54,7 @@ export function CreateScreen() {
           houses: c.houses.map((a) => a.slice()),
           computed: false,
           positions: c.positions ?? null,
+          vargas: cloneVargas(c.vargas),
         }
     }
     return {
@@ -70,53 +65,37 @@ export function CreateScreen() {
       houses: emptyHouses(),
       computed: false,
       positions: null,
+      vargas: {},
     }
   })
   const [placeTool, setPlaceTool] = useState<PlanetCode | null>(null)
-  const [generating, setGenerating] = useState(false)
+  const [editVarga, setEditVarga] = useState('D1')
 
   const patch = (p: Partial<Draft>) => setDraft((d) => ({ ...d, ...p }))
 
-  const computeChart = async () => {
-    if (!draft.date.trim()) {
-      flash('Enter a date of birth to generate')
-      return
-    }
-    const { time, place } = splitTimePlace(draft.place)
-    if (!place) {
-      flash('Enter a birth place (in "Time & place") to generate')
-      return
-    }
-    setGenerating(true)
-    try {
-      const res = await api.post<GenerateResult>('/api/generate', {
-        date: draft.date,
-        time,
-        place,
-        tz: 'Asia/Kolkata',
-      })
-      patch({ ascSign: res.ascSign, houses: res.houses, computed: true, positions: res.positions })
-      flash('Computed via Swiss Ephemeris (Lahiri)')
-    } catch (e) {
-      flash((e as Error).message)
-    } finally {
-      setGenerating(false)
+  // The chart currently being edited (D1 lives on the draft; others in draft.vargas).
+  const cur: VargaChart =
+    editVarga === 'D1'
+      ? { ascSign: draft.ascSign, houses: draft.houses }
+      : (draft.vargas[editVarga] ?? { ascSign: 1, houses: emptyHouses() })
+
+  const setCur = (next: VargaChart) => {
+    if (editVarga === 'D1') {
+      patch({ ascSign: next.ascSign, houses: next.houses })
+    } else {
+      patch({ vargas: { ...draft.vargas, [editVarga]: next } })
     }
   }
 
-  // Manual placement invalidates the ephemeris longitudes, so clear positions
-  // (D9+ will then fall back to the manually-placed D1 chart).
   const placeAt = (i: number) => {
     if (!placeTool) return
-    setDraft((d) => {
-      const wasThere = d.houses[i].includes(placeTool)
-      const houses = d.houses.map((a) => a.filter((p) => p !== placeTool))
-      if (!wasThere) houses[i] = [...houses[i], placeTool]
-      return { ...d, houses, positions: null }
-    })
+    const wasThere = cur.houses[i].includes(placeTool)
+    const houses = cur.houses.map((a) => a.filter((p) => p !== placeTool))
+    if (!wasThere) houses[i] = [...houses[i], placeTool]
+    setCur({ ascSign: cur.ascSign, houses })
   }
 
-  const placed = new Set<string>(draft.houses.flat())
+  const placed = new Set<string>(cur.houses.flat())
   const canSave = draft.name.trim() !== ''
   const placeHint = placeTool ? `placing ${PMETA[placeTool]} — click a house` : 'pick a planet to place'
 
@@ -163,20 +142,6 @@ export function CreateScreen() {
             />
           </label>
           <label style={fieldLabelStyle}>
-            LAGNA (ASCENDANT SIGN)
-            <select
-              value={String(draft.ascSign)}
-              onChange={(e) => patch({ ascSign: Number(e.target.value) })}
-              style={inputStyle}
-            >
-              {SIGNS.map((s, i) => (
-                <option key={s} value={String(i + 1)}>
-                  {s}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label style={fieldLabelStyle}>
             DATE OF BIRTH
             <input
               value={draft.date}
@@ -196,66 +161,37 @@ export function CreateScreen() {
           </label>
         </div>
 
-        <div
-          style={{
-            marginBottom: 16,
-            padding: '14px 16px',
-            border: '1px solid var(--hairline)',
-            borderRadius: 12,
-            background: 'var(--surface)',
-            maxWidth: 620,
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 12,
-              flexWrap: 'wrap',
-            }}
-          >
-            <div>
-              <div style={{ fontWeight: 600, fontSize: 13.5 }}>Generate automatically</div>
-              <div style={{ fontSize: 12, color: 'var(--sub-text)', marginTop: 1 }}>
-                Compute planet positions from birth details via ephemeris API.
-              </div>
-            </div>
-            <button
-              onClick={computeChart}
-              disabled={generating}
-              style={{
-                border: 'none',
-                background: 'var(--accent)',
-                color: 'var(--on-accent)',
-                fontSize: 13,
-                fontWeight: 600,
-                padding: '9px 15px',
-                borderRadius: 9,
-                cursor: generating ? 'wait' : 'pointer',
-                whiteSpace: 'nowrap',
-                opacity: generating ? 0.7 : 1,
-              }}
-            >
-              {generating ? '… Generating' : '✨ Generate'}
-            </button>
-          </div>
-          {draft.computed && (
-            <div
-              style={{
-                marginTop: 11,
-                fontSize: 11.5,
-                color: 'var(--accent-deep)',
-                background: 'var(--accent-soft)',
-                border: '1px solid var(--hairline)',
-                padding: '6px 10px',
-                borderRadius: 7,
-                display: 'inline-block',
-              }}
-            >
-              ✓ Computed via ephemeris (preview) — fine-tune manually below
-            </div>
-          )}
+        {/* Choose which divisional chart to place planets in. */}
+        <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.8px', color: 'var(--sub-text)', marginBottom: 9 }}>
+          DIVISIONAL CHART TO EDIT
+        </div>
+        <div style={{ display: 'flex', gap: 7, marginBottom: 18, flexWrap: 'wrap' }}>
+          {VARGAS.map((v) => {
+            const active = v.key === editVarga
+            const count =
+              v.key === 'D1'
+                ? draft.houses.flat().length
+                : (draft.vargas[v.key]?.houses.flat().length ?? 0)
+            return (
+              <button
+                key={v.key}
+                onClick={() => setEditVarga(v.key)}
+                style={{
+                  fontSize: 12.5,
+                  fontWeight: active ? 600 : 500,
+                  padding: '7px 13px',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  border: `1px solid ${active ? 'var(--accent)' : 'var(--hairline)'}`,
+                  background: active ? 'var(--accent)' : 'var(--surface)',
+                  color: active ? 'var(--on-accent)' : 'var(--sub-text)',
+                }}
+              >
+                {v.label}
+                {count > 0 && <span style={{ opacity: 0.75 }}> · {count}</span>}
+              </button>
+            )
+          })}
         </div>
 
         <div
@@ -274,11 +210,36 @@ export function CreateScreen() {
               padding: 18,
             }}
           >
-            <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--sub-text)', marginBottom: 10 }}>
-              North Indian · D1 — {placeHint}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 10,
+                marginBottom: 10,
+                flexWrap: 'wrap',
+              }}
+            >
+              <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--sub-text)' }}>
+                North Indian · {VARGA_LABEL[editVarga]} — {placeHint}
+              </div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--sub-text)' }}>
+                Lagna
+                <select
+                  value={String(cur.ascSign)}
+                  onChange={(e) => setCur({ ascSign: Number(e.target.value), houses: cur.houses })}
+                  style={{ ...inputStyle, fontSize: 12.5, padding: '6px 8px' }}
+                >
+                  {SIGNS.map((s, i) => (
+                    <option key={s} value={String(i + 1)}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
             <div style={{ aspectRatio: '1 / 1', width: '100%' }}>
-              <NorthIndianChart houses={draft.houses} ascSign={Number(draft.ascSign)} onHouse={placeAt} />
+              <NorthIndianChart houses={cur.houses} ascSign={cur.ascSign} onHouse={placeAt} />
             </div>
           </div>
 
@@ -292,7 +253,7 @@ export function CreateScreen() {
                 marginBottom: 9,
               }}
             >
-              OR PLACE MANUALLY — PICK A PLANET, CLICK A HOUSE
+              PICK A PLANET, CLICK A HOUSE
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 18 }}>
               {PORDER.map((code) => {
@@ -320,8 +281,8 @@ export function CreateScreen() {
               })}
             </div>
             <div style={{ fontSize: 12, color: 'var(--sub-text)', lineHeight: 1.55, marginBottom: 20 }}>
-              Click an armed planet onto a house to place it. Click its house again to remove. Each planet sits in
-              one house.
+              Editing the <b>{VARGA_LABEL[editVarga]}</b> chart. Click an armed planet onto a house to place it; click
+              its house again to remove. Each divisional chart is placed independently.
             </div>
             <button
               onClick={save}

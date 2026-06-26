@@ -15,6 +15,7 @@ class ChartOut(BaseModel):
     notes: NoteOut
     savedAt: int | None
     positions: dict | None = None
+    vargas: dict = Field(default_factory=dict)
 
 
 class DraftIn(BaseModel):
@@ -25,6 +26,7 @@ class DraftIn(BaseModel):
     houses: list[list[str]] = Field(default_factory=list)
     computed: bool = False
     positions: dict | None = None
+    vargas: dict = Field(default_factory=dict)
 
 
 class GenerateIn(BaseModel):

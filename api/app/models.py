@@ -32,6 +32,9 @@ class Chart(Base):
     houses: Mapped[list] = mapped_column(JSON, default=list)
     computed: Mapped[bool] = mapped_column(Boolean, default=False)
     positions: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    # Manual divisional charts keyed by varga (D9, D10, ...): {key: {ascSign, houses}}.
+    # D1 lives in asc_sign/houses above.
+    vargas: Mapped[dict | None] = mapped_column(JSON, default=dict, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow

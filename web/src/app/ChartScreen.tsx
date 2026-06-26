@@ -2,25 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useCharts, relativeTime } from '../store/useCharts'
 import { useToast } from '../store/useToast'
-import { SIGNS, PMETA, PORDER, signOf } from '../lib/astro'
+import { SIGNS, PMETA, PORDER, signOf, VARGAS, VARGA_LABEL } from '../lib/astro'
 import { NorthIndianChart } from '../components/NorthIndianChart'
-import { api } from '../lib/api'
-
-interface VargaView {
-  ascSign: number
-  houses: string[][]
-}
-
-// D1 + D9 are in scope now; the rest are shown disabled until their varga math lands.
-const VARGAS: Array<{ key: string; label: string; enabled: boolean }> = [
-  { key: 'D1', label: 'D1 · Rāśi', enabled: true },
-  { key: 'D9', label: 'D9 · Navāṁśa', enabled: true },
-  { key: 'D10', label: 'D10 · Daśāṁśa', enabled: false },
-  { key: 'D12', label: 'D12', enabled: false },
-  { key: 'D24', label: 'D24', enabled: false },
-  { key: 'D30', label: 'D30', enabled: false },
-  { key: 'D60', label: 'D60', enabled: false },
-]
 
 const pillStyle: React.CSSProperties = {
   fontSize: 12,
@@ -41,7 +24,6 @@ export function ChartScreen() {
   const flash = useToast((s) => s.flash)
 
   const [varga, setVarga] = useState('D1')
-  const [vargaView, setVargaView] = useState<VargaView>({ ascSign: 1, houses: [] })
   const [notesOpen, setNotesOpen] = useState(true)
   const [dictating, setDictating] = useState(false)
   const dictateTimer = useRef<ReturnType<typeof setInterval> | undefined>(undefined)
@@ -57,25 +39,6 @@ export function ChartScreen() {
     return stopDictate
   }, [id])
 
-  // Load the selected divisional chart. D1 comes straight from the chart; D9+ is
-  // computed by the backend from the stored ephemeris longitudes.
-  useEffect(() => {
-    if (!chart) return
-    if (varga === 'D1') {
-      setVargaView({ ascSign: chart.ascSign, houses: chart.houses })
-      return
-    }
-    let cancelled = false
-    api
-      .get<VargaView>(`/api/charts/${chart.id}/varga/${varga}`)
-      .then((d) => !cancelled && setVargaView(d))
-      .catch(() => !cancelled && setVargaView({ ascSign: chart.ascSign, houses: chart.houses }))
-    return () => {
-      cancelled = true
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [varga, chart?.id, chart?.houses, chart?.ascSign])
-
   if (!chart) {
     return (
       <div style={{ padding: '22px 26px' }}>
@@ -85,10 +48,14 @@ export function ChartScreen() {
   }
 
   const planetCount = chart.houses.reduce((a, h) => a + h.length, 0)
-  const vargaLabel = VARGAS.find((v) => v.key === varga)?.label ?? 'D1 · Rāśi'
+  const vargaLabel = VARGA_LABEL[varga] ?? 'D1 · Rāśi'
 
-  // Legend reflects the currently displayed varga.
-  const view: VargaView = vargaView.houses.length ? vargaView : { ascSign: chart.ascSign, houses: chart.houses }
+  // D1 lives on the chart; D9+ come from the manually-placed `vargas` (falling
+  // back to the D1 layout until that divisional chart has been filled in).
+  const view =
+    varga === 'D1'
+      ? { ascSign: chart.ascSign, houses: chart.houses as string[][] }
+      : (chart.vargas?.[varga] ?? { ascSign: chart.ascSign, houses: chart.houses as string[][] })
   const legend: Array<{ code: string; name: string; pos: string }> = []
   PORDER.forEach((code) => {
     for (let i = 0; i < 12; i++) {
@@ -204,22 +171,20 @@ export function ChartScreen() {
         <div style={{ display: 'flex', gap: 7, margin: '18px 0 16px', flexWrap: 'wrap' }}>
           {VARGAS.map((v) => {
             const active = v.key === varga
+            const hasData = v.key === 'D1' ? planetCount > 0 : !!chart.vargas?.[v.key]?.houses.flat().length
             return (
               <button
                 key={v.key}
-                disabled={!v.enabled}
-                title={v.enabled ? undefined : 'Coming soon'}
-                onClick={() => v.enabled && setVarga(v.key)}
+                onClick={() => setVarga(v.key)}
                 style={{
                   fontSize: 12.5,
                   fontWeight: active ? 600 : 500,
                   padding: '7px 13px',
                   borderRadius: 8,
-                  cursor: v.enabled ? 'pointer' : 'not-allowed',
+                  cursor: 'pointer',
                   border: `1px solid ${active ? 'var(--accent)' : 'var(--hairline)'}`,
                   background: active ? 'var(--accent)' : 'var(--surface)',
-                  color: active ? 'var(--on-accent)' : 'var(--sub-text)',
-                  opacity: v.enabled ? 1 : 0.5,
+                  color: active ? 'var(--on-accent)' : hasData ? 'var(--accent-deep)' : 'var(--sub-text)',
                 }}
               >
                 {v.label}

@@ -29,6 +29,7 @@ def serialize(c: Chart) -> dict:
         "notes": {"whole": c.note.body if c.note else ""},
         "savedAt": _to_ms(c.note.saved_at if c.note else None),
         "positions": c.positions,
+        "vargas": c.vargas or {},
     }
 
 
@@ -61,6 +62,7 @@ def create_chart(d: DraftIn, user: User = Depends(get_current_user), db: Session
         houses=d.houses,
         computed=d.computed,
         positions=d.positions,
+        vargas=d.vargas,
     )
     chart.note = Note(body="")
     db.add(chart)
@@ -87,10 +89,17 @@ def get_varga(
     or unsupported varga keys.
     """
     chart = _owned(db, user, chart_id)
-    pos = chart.positions
-    if not pos or not vargas.supported(key):
+    if key == "D1":
         return {"ascSign": chart.asc_sign, "houses": chart.houses or []}
-    return vargas.build_varga(pos["ascLon"], pos["bodies"], key)
+    # Manual divisional placements take priority.
+    manual = (chart.vargas or {}).get(key)
+    if manual:
+        return {"ascSign": manual.get("ascSign", 1), "houses": manual.get("houses", [])}
+    # Otherwise compute from stored ephemeris longitudes if available.
+    pos = chart.positions
+    if pos and vargas.supported(key):
+        return vargas.build_varga(pos["ascLon"], pos["bodies"], key)
+    return {"ascSign": chart.asc_sign, "houses": chart.houses or []}
 
 
 @router.put("/{chart_id}", response_model=ChartOut)
@@ -105,6 +114,7 @@ def update_chart(
     chart.houses = d.houses
     chart.computed = d.computed
     chart.positions = d.positions
+    chart.vargas = d.vargas
     db.commit()
     db.refresh(chart)
     return serialize(chart)

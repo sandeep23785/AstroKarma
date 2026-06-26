@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Chart, ChartPositions } from '../types'
+import type { Chart, ChartPositions, VargaChart } from '../types'
 import type { PlanetCode } from '../lib/astro'
 import { api } from '../lib/api'
 
@@ -13,6 +13,7 @@ export interface Draft {
   houses: PlanetCode[][]
   computed: boolean
   positions?: ChartPositions | null
+  vargas: Record<string, VargaChart>
 }
 
 interface ChartsState {

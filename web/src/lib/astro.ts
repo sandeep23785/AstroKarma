@@ -18,3 +18,18 @@ export const PORDER: PlanetCode[] = ['Su', 'Mo', 'Ma', 'Me', 'Ju', 'Ve', 'Sa', '
 
 // house index i (0-11) for ascendant sign asc (1-12) -> sign number (1-12)
 export const signOf = (i: number, asc: number): number => ((asc - 1 + i) % 12) + 1
+
+// Divisional charts. D1 lives on the chart itself; D9+ are stored in `chart.vargas`.
+export const VARGAS: Array<{ key: string; label: string }> = [
+  { key: 'D1', label: 'D1 · Rāśi' },
+  { key: 'D9', label: 'D9 · Navāṁśa' },
+  { key: 'D10', label: 'D10 · Daśāṁśa' },
+  { key: 'D12', label: 'D12' },
+  { key: 'D24', label: 'D24' },
+  { key: 'D30', label: 'D30' },
+  { key: 'D60', label: 'D60' },
+]
+
+export const VARGA_LABEL: Record<string, string> = Object.fromEntries(
+  VARGAS.map((v) => [v.key, v.label]),
+)
